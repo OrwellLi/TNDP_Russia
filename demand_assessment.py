@@ -80,25 +80,27 @@ daily_operational_hours = 18.0 #часы работы сети в день
 ---------    Загрузка данных o пассажиропотоках -----------'''
 
 print('')
-print('log. ШAГ1  ------  Загрузка данных o пассажиропотоках')
+print('log. ШAГ 1  ------  Загрузка данных o пассажиропотоках')
 
-# location = ([r'/Users/Dimka/Desktop/HSA network design/avia_par_vvo.xlsx', 
-#              r'/Users/Dimka/Desktop/HSA network design/avia_par_vko.xlsx',
-#              r'/Users/Dimka/Desktop/HSA network design/avia_par_svo.xlsx',
-#              r'/Users/Dimka/Desktop/HSA network design/avia_par_ovb.xlsx',
-#              r'/Users/Dimka/Desktop/HSA network design/avia_par_led.xlsx',
-#              r'/Users/Dimka/Desktop/HSA network design/avia_par_kzn.xlsx',
-#              r'/Users/Dimka/Desktop/HSA network design/avia_par_ikt.xlsx',
-#              r'/Users/Dimka/Desktop/HSA network design/avia_par_dme.xlsx'])
+# location = ([r'/Users/Dimka/Desktop/HSA network design/TNDP_Russia/avia_par_vvo.xlsx', 
+#              r'/Users/Dimka/Desktop/HSA network design/TNDP_Russia/avia_par_vko.xlsx',
+#              r'/Users/Dimka/Desktop/HSA network design/TNDP_Russia/avia_par_svo.xlsx',
+#              r'/Users/Dimka/Desktop/HSA network design/TNDP_Russia/avia_par_ovb.xlsx',
+#              r'/Users/Dimka/Desktop/HSA network design/TNDP_Russia/avia_par_led.xlsx',
+#              r'/Users/Dimka/Desktop/HSA network design/TNDP_Russia/avia_par_kzn.xlsx',
+#              r'/Users/Dimka/Desktop/HSA network design/TNDP_Russia/avia_par_ikt.xlsx',
+#              r'/Users/Dimka/Desktop/HSA network design/TNDP_Russia/avia_par_dme.xlsx]'])
 
-location = ([r'avia_par_vvo.xlsx', 
-             r'avia_par_vko.xlsx',
-             r'avia_par_svo.xlsx',
-             r'avia_par_ovb.xlsx',
-             r'avia_par_led.xlsx',
-             r'avia_par_kzn.xlsx',
-             r'avia_par_ikt.xlsx',
-             r'avia_par_dme.xlsx'])
+
+
+location = ([r'TNDP_Russia/avia_par_vvo.xlsx', 
+             r'TNDP_Russia/avia_par_vko.xlsx',
+             r'TNDP_Russia/avia_par_svo.xlsx',
+             r'TNDP_Russia/avia_par_ovb.xlsx',
+             r'TNDP_Russia/avia_par_led.xlsx',
+             r'TNDP_Russia/avia_par_kzn.xlsx',
+             r'TNDP_Russia/avia_par_ikt.xlsx',
+             r'TNDP_Russia/avia_par_dme.xlsx'])
 
 sheet = (['avia_par_vvo',
           'avia_par_vko',
@@ -165,18 +167,18 @@ df.to_excel(excel_writer = "Airport_data.xlsx")
 print('')
 print('log. Сохранение таблицы с полетами')
 df = pd.DataFrame(Airport_data_frequency)
-df.to_excel(excel_writer = "Airport_data_frequency.xlsx")
+df.to_excel(excel_writer = "TNDP_Russia/Airport_data_frequency.xlsx")
 
 print('')
 print('Well done')
 
 
 '''--------------------------------------------------------
------------------------   ШAГ2    -------------------------
+-----------------------   ШAГ 2    -------------------------
 ------------    Очистка и модификация данных -----------'''
 
 print('')
-print('log. ШAГ2  ------  Очистка и модификация данных')
+print('log. ШAГ 2  ------  Очистка и модификация данных')
 print('')
 print('log. Загрузка данных по паксам')
 wb_Airport_data = load_workbook(r'Airport_data.xlsx')
@@ -186,7 +188,7 @@ Airport_data = np.array([[i.value for i in j] for j in ws_Airport_data['B2':'H14
 
 print('')
 print('log. Загрузка данных по полетам')
-wb_Airport_data_frequency = load_workbook(r'Airport_data_frequency.xlsx')
+wb_Airport_data_frequency = load_workbook(r'TNDP_Russia/Airport_data_frequency.xlsx')
 ws_Airport_data_frequency = wb_Airport_data_frequency['Sheet1']
 
 data_rows = []
@@ -247,7 +249,7 @@ print('     по категории  : аэропорт по коду ИАТА')
 print('     топографически: страна')
 print('     географически : широта, долгота')
 
-wb_Aiport_info = load_workbook(r'airportinformation3.xlsx')
+wb_Aiport_info = load_workbook(r'TNDP_Russia/airportinformation3.xlsx')
 ws_Airport_info = wb_Aiport_info['airportdata']
 
 name = np.array([[i.value for i in j] for j in ws_Airport_info['B2':'GPG2']]) 
@@ -513,7 +515,7 @@ airport_information = copy.copy(airport_information_OG)
 print('')
 print('log. Сохранение полной матрицы')
 df = pd.DataFrame(total_matrix).T
-df.to_excel(excel_writer="DM_air_matrix.xlsx")
+df.to_excel(excel_writer="TNDP_Russia/DM_air_matrix.xlsx")
 
 
 
@@ -580,7 +582,7 @@ airport_information = copy.copy(airport_information_OG)
 print('')
 print('log. Сохранение отзеркаленой матрицы')
 df = pd.DataFrame(total_mirror_matrix).T
-df.to_excel(excel_writer="DM_air_matrix_mirror.xlsx")            
+df.to_excel(excel_writer="TNDP_Russia/DM_air_matrix_mirror.xlsx")            
             
 #export total_matrix to excel
 print('')
@@ -601,7 +603,7 @@ for i in range(OD_matrix_frequency.shape[0]):
                 
                 
 df = pd.DataFrame(freq_matrix, index=list_of_airports, columns=list_of_airports)
-df.to_excel(excel_writer="freq_air_matrix.xlsx", sheet_name="Flight Frequencies")
+df.to_excel(excel_writer="TNDP_Russia/freq_air_matrix.xlsx", sheet_name="Flight Frequencies")
             
 #export matrix to excel
 print('')
@@ -621,8 +623,110 @@ for i in range(mirror_matrix_freq.shape[0]):
                 print(f"Нечисловое значение в [{i},{j}]: {value}")
                 
 df_mirror = pd.DataFrame(mirror_freq_matrix, index=list_of_airports, columns=list_of_airports)
-df_mirror.to_excel(excel_writer="freq_air_matrix_mirror.xlsx", sheet_name="Mirrored Flight Frequencies")
+df_mirror.to_excel(excel_writer="TNDP_Russia/freq_air_matrix_mirror.xlsx", sheet_name="Mirrored Flight Frequencies")
 
 print('')
 print ('Well done')
+
+
+
+'''--------------------------------------------------------
+-----------------------   ШAГ 3    -------------------------
+------------    Очистка и модификация данных -----------'''
+
+
+print('')
+print('log. ШAГ 3  ------  Расчёт расстояний между городами и аэропортами')
+
+print('')
+print('log. Добавляем данные по аэропортам, делая исключения:')
+print('     добавляем только русские АП (Европы нет)')
+
+print('')
+print(airport_information)
+
+# correction=0
+# for x in range(len(airport_information)):   
+#     if airport_information[x-correction][3] != 'Russia':
+#         airport_information = np.delete(airport_information, x-correction, axis = 0)
+#         mirror_matrix = np.delete(mirror_matrix, x-correction, axis = 0)
+#         mirror_matrix = np.delete(mirror_matrix, x-correction, axis = 1)
+#         mirror_matrix_freq = np.delete(mirror_matrix_freq, x-correction, axis = 0)
+#         mirror_matrix_freq = np.delete(mirror_matrix_freq, x-correction, axis = 1)
+#         correction = correction + 1
+#import core cities
+print('')
+print('log. Загружаем таблицу растояний ЖД путей российских городов ') 
+wb = load_workbook(r'TNDP_Russia/Core_cities_geography.xlsx')
+ws_vertices = wb['Duration_road']
+
+length_V = 8
+range_len_V = range(8)
+
+V = np.array([[i.value for i in j] for j in ws_vertices['G1':'N1']]) 
+XX = np.zeros(length_V, dtype=object)
+for i in range(len(XX)):
+    XX[i] = V[0,i]
+V = XX #vertex latitudes
+
+V_country = np.array([[i.value for i in j] for j in ws_vertices['G3':'N3']]) 
+XX = np.zeros(length_V, dtype=object)
+for i in range(len(XX)):
+    XX[i] = V_country[0,i]
+V_country = XX #vertex latitudes
+
+V_pop = np.array([[i.value for i in j] for j in ws_vertices['G6':'N6']]) 
+XX = np.zeros(length_V)
+for i in range(len(XX)):
+    XX[i] = V_pop[0,i]
+V_pop = XX #vertex populations
+
+V_lat = np.array([[i.value for i in j] for j in ws_vertices['G4':'N4']]) 
+XX = np.zeros(length_V)
+for i in range(len(XX)):
+    XX[i] = V_lat[0,i]
+V_lat = XX #vertex latitudes
+
+V_lon = np.array([[i.value for i in j] for j in ws_vertices['G5':'N5']]) 
+XX = np.zeros(length_V)
+for i in range(len(XX)):
+    XX[i] = V_lon[0,i]
+V_lon = XX #vertex longitudes 
+
+print(airport_information)
+#sort latitudes and longitudes based on airport information list
+Airport_lat = np.zeros((len(airport_information)))
+Airport_lon = np.zeros((len(airport_information)))
+for row in range(len(Airport_lon)):
+    Airport_lat[row] = airport_information[row][3]
+    Airport_lon[row] = airport_information[row][4]
+    
+#build OD matrices for airport to city
+City_to_Airport_Distance = np.zeros((len(V), len(airport_information))) #greater circle distance
+City_to_Airport_Duration = np.zeros((len(V), len(airport_information))) #duration by car
+
+#define haversine formula
+def haversine(lat_i, lon_i, lat_j, lon_j):
+
+    # convert decimal degrees to radians 
+    lat_i, lon_i, lat_j, lon_j = map(radians, [lat_i, lon_i, lat_j, lon_j])
+
+    # haversine formula 
+    lat_delta = (lat_j - lat_i) 
+    lon_delta = (lon_j - lon_i) 
+    sr = sqrt(sin(lat_delta/2)**2 + cos(lat_i) * cos(lat_j) * sin(lon_delta/2)**2)
+    R_earth = 6371.000 #radius earth [m]
+    ds_gc = R_earth * 2 * asin(sr)
+    return ds_gc #[km]
+
+#calculate greater circle distances matrix
+print('')
+print( 'build city-to-airport distance matrix' )
+for i in range(len(City_to_Airport_Distance)):
+    for j in range(len(City_to_Airport_Distance[0])):
+        City_to_Airport_Distance[i,j] = haversine(V_lat[i],V_lon[i],airport_information[:,3][j],airport_information[:,4][j])
+
+df = pd.DataFrame(City_to_Airport_Distance)
+df.to_excel(excel_writer = "TNDP_Russia/City_to_Airport_Distance.xlsx")
+
 
