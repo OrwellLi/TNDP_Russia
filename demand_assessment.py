@@ -32,7 +32,7 @@ import random
 average_car_speed = 180. #[km/h]
 max_catchment_area_perimeter = 5. #[часы]
 maximum_potential_access_egress_dist = average_car_speed * max_catchment_area_perimeter
-max_accsess_egress_time = 0.5
+max_accsess_egress_time = 2.
 
 VoTime_access    = 67.5 #ценность времени до прибытия в ап(из дома в ап)
 VoTime_waiting   = 75   #ценность времени ожидания
@@ -61,8 +61,8 @@ time_egres_m = [0.5, 0.25, 0.0]
 
 time_wait = time_wait_m[0]
 
-lowerboundary_distance = 200. #граничное условие для дистанции(мин дистанция для учета маршрута)
-lowerboundary_duration = 2.   #граничное условие для времени(минимальная длительность)
+lowerboundary_distance = 500. #граничное условие для дистанции(мин дистанция для учета маршрута)
+lowerboundary_duration = 6.   #граничное условие для времени(минимальная длительность)
 
 
 fc_detour = [1., 1.09, 1.20] #plane, HSR, car коэффициент удлинения пути для различного транспорта
@@ -71,9 +71,9 @@ vehicle_speed = [850., 220., 90.] #plane, HSR, car
 daily_operational_hours = 18.0 #часы работы сети в день
 
 #веса в функции полезности(определить xxx)
-#a1 = -1 * xxx #вес общего времени поездки (отрицательный – чем больше время, тем хуже). 
-#a2 = +1 * xxx  #вес частоты отправлений (положительный – чем чаще рейсы, тем лучше).
-#a3 = -1 * xxx #вес пересечения границы (отрицательный – усложняет поездку).
+a1 = -1 * 3 #вес общего времени поездки (отрицательный – чем больше время, тем хуже). 
+a2 = +1 * 5  #вес частоты отправлений (положительный – чем чаще рейсы, тем лучше).
+a3 = -1 * -1 #вес пересечения границы (отрицательный – усложняет поездку).
 
 '''--------------------------------------------------------
 -----------------------   ШAГ1    -------------------------
@@ -883,6 +883,12 @@ for row in ws_road_duration['G7':'N14']:
 road_duration = np.array(road_duration, dtype=float)
 #-------------------------------------#
 
+
+print("Road distances (km):")
+print(road_distance)
+print("Road durations (hours):")
+print(road_duration)
+
 print('')
 print( 'Подсчитываем полетное время между аэропортами')
 def func_t_inv_air(ds_gc_ij):
@@ -937,3 +943,230 @@ for i in range_len_V:
                     ap2 = int(scatter_list_City_to_Airport[j][0][y])
                     flight_options[i,j][x,y] = T_inv_air[ap1,ap2]
                     
+
+
+""""---------------------------------------------------------------------------
+--------------------------------     ШАГ 6.    -------------------------------
+------------------ Cравнение с другими способами передвижения-----------------
+----------------------------------------------------------------------------"""
+
+
+#Рассчитать общее взвешенное время полета на самолете.
+def func_t_trip_air_weighted(time_access,time_wait,t_in_vehicle,t_egress):
+
+    t_trip_air = (time_access * weight_acc) + (time_wait * weight_wait) + (t_in_vehicle * weight_inv) + (t_egress*weight_egr) #no transfers needed
+
+    return t_trip_air #[h]
+
+
+#рассчитать общее взвешенное время поездки на самолете, но с явной привязкой к паре городов по i/j
+def func_t_trip_air_estimated(i,j,time_access,time_wait,t_in_vehicle,t_egress):
+
+    t_trip_air_estimated = (time_access * weight_acc) + (time_wait * weight_wait) + (t_in_vehicle * weight_inv) + (t_egress*weight_egr) #no transfers needed
+
+    return t_trip_air_estimated #[h]
+
+
+#Рассчитать общее взвешенное время поездки на автомобиле между городами
+def func_t_trip_car_estimated(i,j):
+
+    t_trip_car_estimated = (road_duration[i,j]*weight_inv)
+
+    return t_trip_car_estimated #[h]
+
+
+#Рассчитать вероятность выбора авиатранспорта по сравнению с автомобилем с использованием модели случайного сожаления (Random Regret Model, RRM).
+def func_modalsplit_estimate_air(tt_air,tt_car): #find mode specific regret values
+    
+    #Regret value determination
+    R_air  = np.log(1.0 + math.e**(-0.01 * 60 * (tt_car - tt_air))) - np.log(2)
+    R_car  = np.log(1.0 + math.e**(-0.01 * 60 * (tt_air - tt_car))) - np.log(2)
+
+    #Mode probability determination
+    P_air  = math.e**(-R_air) / (math.e**(-R_air) + math.e**(-R_car))
+    
+    return P_air
+
+
+#Рассчитать "сожаление" (regret) для конкретного маршрута полета по сравнению с другими маршрутами для той же пары городов.
+def func_regret(trip_time,trip_surrounding): #find flight specific regret values
+    
+    dif_sum = 0
+    for tt_x in range(len(trip_surrounding)):
+        dif = math.e**(-0.01 * 60 * (float(trip_surrounding[tt_x])- float(trip_time)))
+        dif_sum = dif_sum + dif
+    R = np.log( 1.0 + dif_sum ) - np.log(2)
+    return R
+
+
+#Рассчитать вероятность выбора конкретного маршрута полета на основе значений сожаления.
+def func_probability(R_x,R_sum_x): #find flight specific probabilities
+    
+    P = math.e**(-1 * float(R_x)) / float(R_sum_x)
+    
+    return P 
+
+#Рассчитать полезность (utility) конкретного маршрута полета с учетом времени доступа, выхода, расстояния и "border crossing" 
+#(пересечения границ, в данном случае не используется, так как все города в России).
+def func_utility_flight(tt_a, tt_e, DST, BC_ap1, BC_ap2): #find flight specific probabilities
+    
+    # U = a1*( ( tt_a*(a2*BC_ap1))*(tt_e*(a2*BC_ap2) ) ) + (a3*DST)
+    U = a1*( ( tt_a*(a2))*(tt_e*(a2) ) ) + (a3*DST)
+    return U 
+
+
+#Рассчитать вероятность выбора маршрута на основе полезности (utility maximization).
+def func_utility_maximisation_probability(V_x,V_sum_x): #find flight specific probabilities
+    
+    P = math.e**(float(V_x)) / float(V_sum_x)
+    
+    return P 
+
+
+
+print("Mirror matrix sample (first 5x5):")
+print(mirror_matrix[:8, :8])
+print("T_inv_air sample (first 5x5):")
+print(T_inv_air[:8, :8])
+
+
+print("Scatter list (city to airports):")
+for v in range_len_V:
+    print(f"City {V[v]}: {scatter_list_City_to_Airport[v][0]}")
+
+
+
+
+""""---------------------------------------------------------------------------
+--------------------------------     STEP 7.    -------------------------------
+--------------------  Construction of connectivity list -----------------------
+-----------------------------------------------------------------------------"""
+
+#""" Only actived when adjusting certain parameters
+
+#make average flight duration matrix
+Matrix_avg_flight = np.full((length_V, length_V), float('inf')) 
+
+#make connectivity list
+print('')
+print('log. Строим таблицу взаимосвязей, включая:')
+print('','-','город вылета, аэропорт вылета, аэропорт назначения, город назначения')
+print('','-','время до прибытия в ап, время от аэропорта до места назначения, время полета')
+print('','-','взвешенные времена, относящиея к ValueOfTime')
+print('','-','относительная величина сожаления, вероятность выбора пути и потенциал')
+connectivity_list = [['i','access','ap1','flight','ap2','egress','j','dur_tot','dur_tot_wei','R','P','potential','pax','pax_ij_tot','marketshare_ij','freq','cb_ap1','cb_ap2','Utility', 'prob. MNL']]
+with tqdm(total=length_V, desc="Processing", bar_format="{l_bar}{bar} [ time left: {remaining} ]", position=0, leave=True) as pbar:
+    for i in range_len_V:
+        pbar.update(1)
+        for j in range_len_V: 
+            if i != j:
+                #if (i == 109 and j == 122) or (i == 112 and j == 122) :
+                if 1 == 1:
+                    if road_distance[i,j] > lowerboundary_distance or road_duration[i,j] > lowerboundary_duration:
+                        #make list of feasible routes
+                        feasible_routes = list()
+                        for x in range(len(flight_options[i,j])):
+                            for y in range(len(flight_options[i,j][0])):
+                                #fill in already available data concerning feasible trip characteristics
+                                if flight_options[i,j][x,y] != float('inf'):
+                                    trip = [i,'t_acc',int(scatter_list_City_to_Airport[i][0][x]),flight_options[i,j][x,y],int(scatter_list_City_to_Airport[j][0][y]),'t_egr',j,'t_tot', 't_weight','R', 'P', 'pot', 'pax','pax_ij_tot','marketshare_ij','freq',0.0,0.0,'Utility', 'prob. MNL']
+                                    trip[1] = City_to_Airport_Duration[i,trip[2]]
+                                    trip[5] = City_to_Airport_Duration[j,trip[4]]
+                                    trip[7] = trip[1] + trip[3] + trip[5] + time_wait
+                                    trip[8] = func_t_trip_air_weighted(trip[1],time_wait,trip[3],trip[5])
+                                    trip[15] = mirror_matrix_freq[trip[2],trip[4]]
+                                    if V_country[int(trip[0])] != airport_information[trip[2]][4]:
+                                        trip[16] = 1.0 
+                                    if airport_information[trip[4]][4] != V_country[int(trip[6])]:
+                                        trip[17] = 1.0
+                                    #append this trip to the list of feasbile routes
+                                    if len(feasible_routes) == 0:
+                                        feasible_routes = [trip]
+                                    else:
+                                        feasible_routes = np.append(feasible_routes, [trip], axis=0)
+                        #calculate regret value
+                        if len(feasible_routes) > 1:
+                            #print('')
+                            for trip in range(len(feasible_routes)):
+                                trip_time = feasible_routes[trip,8]   
+                                trip_surrounding = np.delete(feasible_routes[:,8], trip)
+                                R = func_regret(trip_time,trip_surrounding)
+                                feasible_routes[trip,9] = R
+                                tt_a = float(feasible_routes[trip,1])
+                                tt_e = float(feasible_routes[trip,5])
+                                if feasible_routes[trip,15] == 'n/a': #estimate value when frequency is missing
+                                    feasible_routes[trip,15] = mirror_matrix[int(feasible_routes[trip,2]),int(feasible_routes[trip,4])] / 365 / 150 #150 estimate average flight
+                                if feasible_routes[trip,15] == ':': #estimate value when frequency is missing
+                                    feasible_routes[trip,15] = mirror_matrix[int(feasible_routes[trip,2]),int(feasible_routes[trip,4])] / 365 / 150 #150 estimate average flight
+                                DST = (daily_operational_hours / float(feasible_routes[trip,15])) / 4.0
+                                BC_ap1 = float(feasible_routes[trip,16]) 
+                                BC_ap2 = float(feasible_routes[trip,17])
+                                U = func_utility_flight(tt_a, tt_e, DST, BC_ap1, BC_ap2)
+                                feasible_routes[trip,18] = U
+                            #summate R value as preparation for P calculations
+                            R_sum_x = 0
+                            for trip in range(len(feasible_routes)):
+                                R_sum_x = R_sum_x + math.e**(-1 * float(feasible_routes[trip,9]))
+                                
+                            U_sum_x = 0
+                            for trip in range(len(feasible_routes)):
+                                U_sum_x = U_sum_x + math.e**(float(feasible_routes[trip,18]))
+                                #print '(',round(float(feasible_routes[trip,8]),1), round(float(feasible_routes[trip,15]),1), int(float(feasible_routes[trip,16]) + float(feasible_routes[trip,17])),')' ,
+                            #print('')
+                            #calculate probability value
+                            for trip in range(len(feasible_routes)):
+                                p = func_probability(feasible_routes[trip,9],R_sum_x)
+                                feasible_routes[trip,10] = p
+                                #print round(p,3),
+                            #print('')
+                            for trip in range(len(feasible_routes)):
+                                p_mnl = func_utility_maximisation_probability(feasible_routes[trip,18],U_sum_x)
+                                feasible_routes[trip,19] = p_mnl
+                                #print round(p_mnl,3),
+                            #print('')
+                            #calculate average flight trip
+                            flight_avg = [0,time_wait_m[0],0,0] #'t_access',t_wait,'t_inv','t_egress'
+                            for trip in range(len(feasible_routes)):
+                                flight_avg[0] = flight_avg[0] + (float(feasible_routes[trip,1]) * float(feasible_routes[trip,19])) #access time * probability
+                                flight_avg[2] = flight_avg[2] + (float(feasible_routes[trip,3]) * float(feasible_routes[trip,19])) #inv. time * probability
+                                flight_avg[3] = flight_avg[3] + (float(feasible_routes[trip,5]) * float(feasible_routes[trip,19])) #egress * probability
+                            #estimate travel times using other modes
+                            tt_air  = func_t_trip_air_estimated(i, j, flight_avg[0], flight_avg[1], flight_avg[2], flight_avg[3] )
+                            tt_car  = func_t_trip_car_estimated(i, j                                                             )
+                            #save average flight time for later works
+                            Matrix_avg_flight[i,j] = tt_air
+                            #estimate modal split for air travel when comparing to other modes
+                            MS_air_estimate = func_modalsplit_estimate_air(tt_air,tt_car)
+                            #translate probability into potential
+                            for trip in range(len(feasible_routes)):
+                                potential = MS_air_estimate * ( V_pop[i] * V_pop[j] ) / (road_distance[i,j] / fc_detour[2]) * float(feasible_routes[trip,10])
+                                feasible_routes[trip,11] = potential
+                            #append trip data to connectivity list
+                            for trip in range(len(feasible_routes)):
+                                connectivity_list = np.append(connectivity_list, [feasible_routes[trip]], axis=0)
+                        if len(feasible_routes) == 1:
+                            #give values to R and P
+                            feasible_routes[0][9] = 1.00
+                            feasible_routes[0][10] = 1.00
+                            #define only flight as average flight
+                            flight_avg = [float(feasible_routes[0][1]),time_wait_m[0],float(feasible_routes[0][3]),float(feasible_routes[0][5])]
+                            #define competing travel times 
+                            tt_air  = func_t_trip_air_estimated( i, j, flight_avg[0], flight_avg[1], flight_avg[2], flight_avg[3] )
+                            tt_car  = func_t_trip_car_estimated( i, j                                                             )
+                            #save average flight time for later works
+                            Matrix_avg_flight[i,j] = tt_air
+                            #estimate modal split for air travel when comparing to other modes
+                            MS_air_estimate = func_modalsplit_estimate_air(tt_air,tt_car)
+                            #translate probability into potential
+                            feasible_routes[0][11] = MS_air_estimate * ( V_pop[i] * V_pop[j] ) / (road_distance[i,j] / fc_detour[2]) 
+                            #append trip data to connectivity list
+                            connectivity_list = np.append(connectivity_list, [feasible_routes[0]], axis=0)
+                            #print MS_air_estimate
+            
+#delete header row from connectivity list in order to calculate on it
+connectivity_list = np.delete(connectivity_list, 0, axis = 0)
+
+print( Matrix_avg_flight)
+
+
+
