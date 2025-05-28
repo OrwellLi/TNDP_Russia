@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time 
 starttime = time.time
-
+import openrouteservice
 from math import radians, cos, sin, asin, sqrt
 import datetime
 import math
@@ -29,7 +29,7 @@ import random
 #--------------------------------
 #Загрузка параметров
 
-average_car_speed = 90. #[km/h]
+average_car_speed = 180. #[km/h]
 max_catchment_area_perimeter = 5. #[часы]
 maximum_potential_access_egress_dist = average_car_speed * max_catchment_area_perimeter
 max_accsess_egress_time = 0.5
@@ -663,7 +663,7 @@ ws_vertices = wb['Duration_road']
 length_V = 8
 range_len_V = range(8)
 
-V = np.array([[i.value for i in j] for j in ws_vertices['G1':'N1']]) 
+V = np.array([[i.value for i in j] for j in ws_vertices['G2':'N2']]) 
 XX = np.zeros(length_V, dtype=object)
 for i in range(len(XX)):
     XX[i] = V[0,i]
@@ -730,3 +730,116 @@ df = pd.DataFrame(City_to_Airport_Distance)
 df.to_excel(excel_writer = "TNDP_Russia/City_to_Airport_Distance.xlsx")
 
 
+
+'''--------------------------------------------------------
+-----------------------   ШAГ 4    -------------------------
+--- Расчет времени доступа между городами и аэропортами ---'''
+
+print('')
+print ('log. Загрузка CIty - to - Airport расстояний через API(OpenRouteService)' )
+
+#define infeasible city-airport combinations
+for i in range(len(City_to_Airport_Distance)):
+    for j in range(len(City_to_Airport_Distance[0])):
+        if City_to_Airport_Distance[i,j] > maximum_potential_access_egress_dist:
+            City_to_Airport_Duration[i,j] = float('inf')
+'''
+#export duration matrix to allow for in-between saving
+df = pd.DataFrame(CI_to_AP_dura)
+df.to_excel(excel_writer = "C:/Users/909448/Documents/##AFSTUDEREN/modelling/Netwerk/CI_to_AP_dura.xlsx")
+'''
+            
+wb = load_workbook(r'TNDP_Russia/City_to_Airport_Duration.xlsx')
+ws = wb['Sheet1']
+City_to_Airport_Duration = np.array([[i.value for i in j] for j in ws['B2':'I9']],dtype=object)
+
+
+print('')
+print(airport_information)
+
+#determine access and egress times
+saver = 0
+counter = 0
+for v in range(len(City_to_Airport_Duration)):
+    for ap in range(len(City_to_Airport_Duration[0])):
+        value = City_to_Airport_Duration[v, ap]
+        # Преобразуем значение в float
+        if isinstance(value, str):
+            if value.lower() == "inf":
+                value = float('inf')
+            else:
+                value = float(value)
+        else:
+            value = float(value)
+        if value < 0.000001:
+            print('')
+            print ('от' , ap,airport_information[:,1][ap],'(города) до ',v,V[v], ' (аэропорта)',)
+            randomizer = 0
+            
+            distance = haversine(V_lat[v], V_lon[v], float(airport_information[ap, 3]), float(airport_information[ap, 4]))
+            if distance * 1000 > 5900000:  # Преобразование в метры и проверка лимита 5900 км
+                City_to_Airport_Duration[v, ap] = float('inf')
+                print(f"Distance {distance:.2f} km exceeds limit, setting to inf")
+                continue
+            
+            if randomizer == 0:
+                coords = ((V_lon[v],V_lat[v]), (airport_information[:,4][ap],airport_information[:,3][ap]))
+                # print('')
+                # print(coords)
+                # print('')
+                client = openrouteservice.Client(key='5b3ce3597851110001cf62481a403ebd11a94d8fbf2320c2f8eac293') # Specify your personal API key
+                routes = client.directions(
+                    coordinates=coords,
+                    profile='driving-car',
+                    radiuses=[10000,10000],
+                    format='geojson',
+                    validate=False,
+                )
+                # print(routes)
+            # if randomizer == 1:
+            #     coords = ((V_lon[v],V_lat[v]), (airport_information[:,7][ap],airport_information[:,6][ap]))
+            #     client = openrouteservice.Client(key='5b3ce3597851110001cf62483b780fd5c5dd455da89cc2eaa17543d8') # Specify your personal API key
+            #     routes = client.directions(
+            #         coordinates=coords,
+            #         profile='driving-car',
+            #         radiuses=[4000,4000],
+            #         format='geojson',
+            #         validate=False,
+            #     )
+            # if randomizer == 2:
+            #     coords = ((V_lon[v],V_lat[v]), (airport_information[:,7][ap],airport_information[:,6][ap]))
+            #     client = openrouteservice.Client(key='5b3ce3597851110001cf62481e0b82020ae745c2ae7b6642eabcc7a9') # Specify your personal API key
+            #     routes = client.directions(
+            #         coordinates=coords,
+            #         profile='driving-car',
+            #         radiuses=[4000,4000],
+            #         format='geojson',
+            #         validate=False,
+            #     )
+            print(routes['features'][0]['properties']['segments'][0]['duration']/60/60)
+            if routes['features'][0]['properties']['segments'][0]['duration']/60/60 < max_catchment_area_perimeter:
+                City_to_Airport_Duration[v,ap] = routes['features'][0]['properties']['segments'][0]['duration']/60/60
+            else:
+                City_to_Airport_Duration[v,ap] = float('inf')
+            counter = counter+1
+            saver = saver+1
+            print( counter, '(',v,',',ap,')')#,coords
+            if saver == 19:
+                df_dur = pd.DataFrame(City_to_Airport_Duration)
+                df_dur.to_excel(excel_writer = "TNDP_Russia/City_to_Airport_Duration.xlsx")
+                
+                
+df_dur = pd.DataFrame(City_to_Airport_Duration)
+df_dur.to_excel(excel_writer = "TNDP_Russia/City_to_Airport_Duration.xlsx")
+          
+df_dur = pd.DataFrame(airport_information)
+df_dur.to_excel(excel_writer = "TNDP_Russia/airport_information.xlsx")
+
+"""
+
+#""" #only activated in first run
+print('')
+print('log. Загрузка City - to - Airport матрицы расстояний')
+wb = load_workbook(r'TNDP_Russia/City_to_Airport_Duration.xlsx')
+ws  =    wb['Sheet1']
+CI_to_AP_dura = np.array([[i.value for i in j] for j in ws['B2':'I9']],dtype=object)
