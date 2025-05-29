@@ -1,3 +1,5 @@
+#aopa
+
 """
 Created on Thu 22 MAY 16:22:22 2025
 
@@ -29,7 +31,7 @@ import random
 #--------------------------------
 #Загрузка параметров
 
-average_car_speed = 180. #[km/h]
+average_car_speed = 110. #[km/h]
 max_catchment_area_perimeter = 5. #[часы]
 maximum_potential_access_egress_dist = average_car_speed * max_catchment_area_perimeter
 max_accsess_egress_time = 2.
@@ -46,33 +48,33 @@ weight_inv = 1.0
 weight_tran = VoTime_transfer / VoTime_invehicle
 weight_egr = VoTime_egress / VoTime_invehicle
 
-time_access = 0.60 #time from leaving home to seat in plane
-time_dec = 0.60    #time from leaving plane to reach home
+time_access = 2. #time from leaving home to seat in plane
+time_dec = 1.    #time from leaving plane to reach home
 fac_dt = 1         #множитель времени, для поправки момента искревления пути
 distance_acc = 50  #расстояние доступа
 distance_dec = 50  #расстояние выхода
-speed_kreys = 850  #крейсерская скорость
+speed_kreys = 1800  #крейсерская скорость
 
 #матрица времени для разных режимов[hours]
 time_acc_m = [0.5, 0.25, 0.0]
-time_wait_m = [1.8333, 0.5, 0.0]
-time_transfer_m = [1.5, 1.0, 0.0]
-time_egres_m = [0.5, 0.25, 0.0]
+time_wait_m = [2., 0.5, 0.0]
+time_transfer_m = [2., 1.5, 0.0]
+time_egres_m = [1., 0.5, 0.0]
 
 time_wait = time_wait_m[0]
 
-lowerboundary_distance = 500. #граничное условие для дистанции(мин дистанция для учета маршрута)
-lowerboundary_duration = 6.   #граничное условие для времени(минимальная длительность)
+lowerboundary_distance = 300. #граничное условие для дистанции(мин дистанция для учета маршрута)
+lowerboundary_duration = 3.   #граничное условие для времени(минимальная длительность)
 
 
 fc_detour = [1., 1.09, 1.20] #plane, HSR, car коэффициент удлинения пути для различного транспорта
-vehicle_speed = [850., 220., 90.] #plane, HSR, car
+vehicle_speed = [1800., 220., 110.] #plane, HSR, car
 
-daily_operational_hours = 18.0 #часы работы сети в день
+daily_operational_hours = 22.0 #часы работы сети в день
 
 #веса в функции полезности(определить xxx)
-a1 = -1 * 3 #вес общего времени поездки (отрицательный – чем больше время, тем хуже). 
-a2 = +1 * 5  #вес частоты отправлений (положительный – чем чаще рейсы, тем лучше).
+a1 = -1 * 2 #вес общего времени поездки (отрицательный – чем больше время, тем хуже). 
+a2 = +1 * 3  #вес частоты отправлений (положительный – чем чаще рейсы, тем лучше).
 a3 = -1 * -1 #вес пересечения границы (отрицательный – усложняет поездку).
 
 '''--------------------------------------------------------
@@ -114,6 +116,7 @@ sheet = (['avia_par_vvo',
 Airport_data = [['Unit', 'Msr', 'orig_ap', 'dest_ap', 'pax']]
 Airport_data_frequency = [['Unit', 'Msr', 'orig_ap', 'dest_ap', 'flights']]
 
+time.sleep(1)
 print('')
 print('log. Bытаскиваем данные от АП по паксам и полетам')
 
@@ -156,13 +159,15 @@ with tqdm(total=len(location), desc="Processing", bar_format="{l_bar}{bar} [ tim
                     Airport_data_frequency = np.append(Airport_data_frequency, [Table[row]], axis=0)
                     
         pbar.update(1)
-        
+
+time.sleep(1)
 #save pax
 print('')
 print('log. Сохранение таблицы с паксами')
 df = pd.DataFrame(Airport_data)
 df.to_excel(excel_writer = "Airport_data.xlsx")
 
+time.sleep(1)
 #save freq
 print('')
 print('log. Сохранение таблицы с полетами')
@@ -177,6 +182,7 @@ print('Well done')
 -----------------------   ШAГ 2    -------------------------
 ------------    Очистка и модификация данных -----------'''
 
+time.sleep(2)
 print('')
 print('log. ШAГ 2  ------  Очистка и модификация данных')
 print('')
@@ -185,7 +191,7 @@ wb_Airport_data = load_workbook(r'Airport_data.xlsx')
 ws_Airport_data = wb_Airport_data['Sheet1']
 Airport_data = np.array([[i.value for i in j] for j in ws_Airport_data['B2':'H14174']])  
 
-
+time.sleep(1)
 print('')
 print('log. Загрузка данных по полетам')
 wb_Airport_data_frequency = load_workbook(r'TNDP_Russia/Airport_data_frequency.xlsx')
@@ -199,7 +205,7 @@ for row in ws_Airport_data_frequency.iter_rows(min_row=2, values_only=True):
 
 Airport_data_frequency = np.array(data_rows, dtype=object)
 
-
+time.sleep(1)
 print('')
 print('log. Подгружаем данные об аэропортах и убираем лишние ячейки')
 
@@ -216,7 +222,7 @@ for row in range(len(Airport_data)):
         Airport_data = np.delete(Airport_data, [row-correction], axis=0)
         correction = correction+1
         
-
+time.sleep(1)
 print('')
 print( 'log. Идентификация оставшихся аэропортов')
 #Создаем список уникальных ап
@@ -243,6 +249,7 @@ for n in range(Num_airports):
     list_of_airports[n] = list_Airport_temp[n]
 
 
+time.sleep(1)
 print('')
 print('log. Загружаем характеристики аэропортов.')
 print('     по категории  : аэропорт по коду ИАТА') 
@@ -327,7 +334,7 @@ def Airport_index_num(a): #находим индекс аэропорта
         print(f"Ошибка при поиске аэропорта '{a}': {str(e)}")
         return -1
 
-
+time.sleep(1)
 print('')
 print ('log. Комбинируем характеристики аэропорта в одну матрицу')
 # print ('')
@@ -353,6 +360,7 @@ for row in range(len(Airport_data)-1):
             OD_matrix[i,j] = pax if pax is not None else 0
 
 
+
 print('')
 print('log. Матрица сделана')        
         
@@ -376,10 +384,11 @@ for row in range(len(Airport_data_frequency)-1):
     if freq_y == 0 and OD_matrix[i,j] > 0:
         OD_matrix_frequency[i,j] = -1 * float('inf')  # маркер для отсутствующих данных
         
+
 mirror_matrix = np.zeros((len(list_of_airports), len(list_of_airports)), dtype=float)
 for i in range(len(mirror_matrix)):
     for j in range(len(mirror_matrix)):
-        mirror_matrix[i,j] = np.maximum(OD_matrix_float[i,j], OD_matrix_float[j,i]) / 2.0
+        mirror_matrix[i,j] = np.maximum(OD_matrix_float[i,j], OD_matrix_float[j,i]) / 2.0 / 365.0
         mirror_matrix[j,i] = mirror_matrix[i,j]  # Не нужно copy.copy для numpy массивов           
 
 mirror_matrix_freq = np.zeros((len(list_of_airports), len(list_of_airports)), dtype=object)
@@ -511,6 +520,7 @@ total_matrix = np.append(upper_bar, total_matrix, axis=0)
 # Восстанавливаем исходный массив
 airport_information = copy.copy(airport_information_OG)
 
+time.sleep(1)
 # Экспорт total_matrix в Excel
 print('')
 print('log. Сохранение полной матрицы')
@@ -578,12 +588,14 @@ total_mirror_matrix = np.append(upper_bar_mirror, total_mirror_matrix, axis=0)
 # Восстанавливаем исходный массив
 airport_information = copy.copy(airport_information_OG)
 
+time.sleep(1)
 # Экспорт total_mirror_matrix в Excel
 print('')
 print('log. Сохранение отзеркаленой матрицы')
 df = pd.DataFrame(total_mirror_matrix).T
 df.to_excel(excel_writer="TNDP_Russia/DM_air_matrix_mirror.xlsx")            
-            
+  
+time.sleep(1)          
 #export total_matrix to excel
 print('')
 print('log. Сохранение полной матрицы полетов')
@@ -604,7 +616,9 @@ for i in range(OD_matrix_frequency.shape[0]):
                 
 df = pd.DataFrame(freq_matrix, index=list_of_airports, columns=list_of_airports)
 df.to_excel(excel_writer="TNDP_Russia/freq_air_matrix.xlsx", sheet_name="Flight Frequencies")
-            
+
+
+time.sleep(1)        
 #export matrix to excel
 print('')
 print ('log. Сохранение зеркальной матрицы полетов')
@@ -634,7 +648,7 @@ print ('Well done')
 -----------------------   ШAГ 3    -------------------------
 ------------    Очистка и модификация данных -----------'''
 
-
+time.sleep(1)
 print('')
 print('log. ШAГ 3  ------  Расчёт расстояний между городами и аэропортами')
 
@@ -644,7 +658,7 @@ print('     добавляем только русские АП (Европы н
 
 print('')
 print(airport_information)
-
+print('')
 # correction=0
 # for x in range(len(airport_information)):   
 #     if airport_information[x-correction][3] != 'Russia':
@@ -655,8 +669,11 @@ print(airport_information)
 #         mirror_matrix_freq = np.delete(mirror_matrix_freq, x-correction, axis = 1)
 #         correction = correction + 1
 #import core cities
+
+time.sleep(1)
 print('')
 print('log. Загружаем таблицу растояний ЖД путей российских городов ') 
+print('')
 wb = load_workbook(r'TNDP_Russia/Core_cities_geography.xlsx')
 ws_vertices = wb['Duration_road']
 
@@ -719,9 +736,11 @@ def haversine(lat_i, lon_i, lat_j, lon_j):
     ds_gc = R_earth * 2 * asin(sr)
     return ds_gc #[km]
 
+
+time.sleep(1)
 #calculate greater circle distances matrix
 print('')
-print( 'build city-to-airport distance matrix' )
+print( 'log. Строим таблицу расстояний City - to - Airport' )
 for i in range(len(City_to_Airport_Distance)):
     for j in range(len(City_to_Airport_Distance[0])):
         City_to_Airport_Distance[i,j] = haversine(V_lat[i],V_lon[i],airport_information[:,3][j],airport_information[:,4][j])
@@ -734,6 +753,11 @@ df.to_excel(excel_writer = "TNDP_Russia/City_to_Airport_Distance.xlsx")
 # '''--------------------------------------------------------
 # -----------------------   ШAГ 4    -------------------------
 # --- Расчет времени доступа между городами и аэропортами ---'''
+
+
+time.sleep(1)
+print('')
+print('log. ШAГ 4  ------  Расчет времени доступа между городами и аэропортами')
 
 print('')
 print('log. Загрузка CIty - to - Airport расстояний через API(OpenRouteService)')
@@ -810,7 +834,7 @@ df_dur.to_excel(excel_writer="TNDP_Russia/City_to_Airport_Duration.xlsx")
 df_dur = pd.DataFrame(airport_information)
 df_dur.to_excel(excel_writer="TNDP_Russia/airport_information.xlsx")
 
-
+time.sleep(1)
 #""" #only activated in first run
 print('')
 print('log. Загрузка City - to - Airport матрицы расстояний')
@@ -821,10 +845,16 @@ City_to_Airport_Duration = np.array([[i.value for i in j] for j in ws['B2':'I9']
 
 '''--------------------------------------------------------
 -----------------------   ШAГ 5    -------------------------
---- Разработка всех возможных маршрутов ---'''
+----------- Разработка всех возможных маршрутов ------------'''
+
+
+
+time.sleep(1)
+print('')
+print('log. ШAГ 5  ------  Разработка всех возможных маршрутов')
 
 print('')
-print( 'Загружаем данные о расстояниях между городами (центры)' )
+print('log. Загружаем данные о расстояниях между городами (центры)' )
 wb_road_distances = load_workbook(r'TNDP_Russia/Core_cities_geography.xlsx')
 ws_road_distances = wb_road_distances['Distance_road']
 # road_distance = np.array([[i.value for i in j] for j in ws_road_distances['G7':'N14']], dtype=float)
@@ -854,8 +884,9 @@ road_distance = np.array(road_distance, dtype=float)
 #-------------------------------------#
 
 
+time.sleep(1)
 print('')
-print( 'Загружаем данные о временных интервалах между городами' )
+print('log. Загружаем данные о временных интервалах между городами' )
 wb_road_duration = load_workbook(r'TNDP_Russia/Core_cities_geography.xlsx')
 ws_road_duration = wb_road_distances['Duration_road']
 # road_duration = np.array([[i.value for i in j] for j in ws_road_duration['G7':'N14']], dtype=float)
@@ -883,14 +914,17 @@ for row in ws_road_duration['G7':'N14']:
 road_duration = np.array(road_duration, dtype=float)
 #-------------------------------------#
 
+# print('')
+# print("log. Road distances (km):")
+# print(road_distance)
+# print('')
+# print("log. Road durations (hours):")
+# print(road_duration)
 
-print("Road distances (km):")
-print(road_distance)
-print("Road durations (hours):")
-print(road_duration)
 
+time.sleep(1)
 print('')
-print( 'Подсчитываем полетное время между аэропортами')
+print( 'log. Подсчитываем полетное время между аэропортами')
 def func_t_inv_air(ds_gc_ij):
     
     #рассчет полетного времени
@@ -912,9 +946,11 @@ for i in range(len(airport_information)):
 #print airport_information[192][0], airport_information[265][0], str(datetime.timedelta(seconds=T_inv_air[192,265]*60*60))
 #print airport_information[192][0], airport_information[281][0], str(datetime.timedelta(seconds=T_inv_air[192,281]*60*60))
 
+
+time.sleep(1)
 #construction flight possibilities for each city-to-city OD pair
 print('')
-print( 'Определение городов в зоне досягаемости аэропортов (catchment area)' )                     
+print( 'log. Определение городов в зоне досягаемости аэропортов (catchment area)' )                     
 #build scatter lists for each city V
 scatter_list_City_to_Airport = np.zeros((length_V,1), dtype=object)
 for v in range_len_V:
@@ -925,9 +961,10 @@ for v in range_len_V:
     #print v, V[v], scatter_AP
     scatter_list_City_to_Airport[v][0] = scatter_AP
 
+time.sleep(1)
 #build flight-options
 print('')
-print('Определяем возможные траектории полета для каждой пары городов')   
+print('log. Определяем возможные траектории полета для каждой пары городов')   
 flight_options = np.zeros((length_V, length_V), dtype=object)
 for i in range_len_V:
     for j in range_len_V:
@@ -950,6 +987,10 @@ for i in range_len_V:
 ------------------ Cравнение с другими способами передвижения-----------------
 ----------------------------------------------------------------------------"""
 
+
+time.sleep(1)
+print('')
+print('log. ШAГ 6  ------  Cравнение с другими способами передвижения')
 
 #Рассчитать общее взвешенное время полета на самолете.
 def func_t_trip_air_weighted(time_access,time_wait,t_in_vehicle,t_egress):
@@ -1023,14 +1064,19 @@ def func_utility_maximisation_probability(V_x,V_sum_x): #find flight specific pr
     return P 
 
 
+# print('')
+# print("log. Mirror matrix sample (first 5x5):")
+# print(mirror_matrix[:8, :8])
+# print('')
+# print("log. T_inv_air sample (first 5x5):")
+# print(T_inv_air[:8, :8])
+# print('')
 
-print("Mirror matrix sample (first 5x5):")
-print(mirror_matrix[:8, :8])
-print("T_inv_air sample (first 5x5):")
-print(T_inv_air[:8, :8])
-
-
-print("Scatter list (city to airports):")
+time.sleep(1)
+print('')
+time.sleep(1)
+print("log. Список достижений от аэропортов до городов :")
+print('')
 for v in range_len_V:
     print(f"City {V[v]}: {scatter_list_City_to_Airport[v][0]}")
 
@@ -1042,18 +1088,25 @@ for v in range_len_V:
 --------------------  Construction of connectivity list -----------------------
 -----------------------------------------------------------------------------"""
 
+time.sleep(1)
+print('')
+print('log. ШAГ 7  ------  Строим таблицу взаимосвязей')
+
+
 #""" Only actived when adjusting certain parameters
 
 #make average flight duration matrix
 Matrix_avg_flight = np.full((length_V, length_V), float('inf')) 
 
+time.sleep(1)
 #make connectivity list
 print('')
 print('log. Строим таблицу взаимосвязей, включая:')
-print('','-','город вылета, аэропорт вылета, аэропорт назначения, город назначения')
-print('','-','время до прибытия в ап, время от аэропорта до места назначения, время полета')
-print('','-','взвешенные времена, относящиея к ValueOfTime')
-print('','-','относительная величина сожаления, вероятность выбора пути и потенциал')
+print('  ','- город вылета, аэропорт вылета, аэропорт назначения, город назначения')
+print('  ','-','время до прибытия в ап, время от аэропорта до места назначения, время полета')
+print('  ','-','взвешенные времена, относящиея к ValueOfTime')
+print('  ','-','относительная величина сожаления, вероятность выбора пути и потенциал')
+print('')
 connectivity_list = [['i','access','ap1','flight','ap2','egress','j','dur_tot','dur_tot_wei','R','P','potential','pax','pax_ij_tot','marketshare_ij','freq','cb_ap1','cb_ap2','Utility', 'prob. MNL']]
 with tqdm(total=length_V, desc="Processing", bar_format="{l_bar}{bar} [ time left: {remaining} ]", position=0, leave=True) as pbar:
     for i in range_len_V:
@@ -1166,7 +1219,168 @@ with tqdm(total=length_V, desc="Processing", bar_format="{l_bar}{bar} [ time lef
 #delete header row from connectivity list in order to calculate on it
 connectivity_list = np.delete(connectivity_list, 0, axis = 0)
 
-print( Matrix_avg_flight)
+time.sleep(1)
+print('')
+print(Matrix_avg_flight)
+
+""""---------------------------------------------------------------------------
+--------------------------------     STEP 8.    -------------------------------
+-------------  Перевод спроса на авиаперевозки с аэропортов на города ---------
+-----------------------------------------------------------------------------"""
+
+time.sleep(1)
+print('')
+print('log. ШAГ 8  ------  Перевод спроса на авиаперевозки с аэропортов на города')
+
+#make airport numbers integers again
+DEMAND_AIR = np.zeros((length_V, length_V))
+Matrix_avg_flight_2 = np.zeros((length_V, length_V), dtype=object)
+for i in range_len_V:
+    for j in range_len_V:
+        Matrix_avg_flight_2[i,j] = [0,0,0,0,0,0] #'t_access',t_wait,'t_inv','t_egress', t_tot, t_w_tot
+
+time.sleep(1)
+APx_to_APy_list_total = [['i','ac','ap1','fl','ap2','eg','j','dt','dtw','R','P','pot','pax','pax_ij_tot','marketshare_ij','freq','cb_ap1','cb_ap2','Utility', 'prob. MNL']]
+print('')
+print( 'log. Переводим спрос на авиаперевозки с аэропортов на города:')
+with tqdm(total=len(airport_information), desc="log. Processing", bar_format="{l_bar}{bar} [ time left: {remaining} ]",position=0, leave=True) as pbar:
+    for x in range(len(airport_information)):
+        pbar.update(1)
+        #for z in tqdm(range(len(airport_information))): #loading bar
+        for y in range(len(airport_information)):
+            if mirror_matrix[x,y] != ':':
+                #lookup for all possible flights
+                APx_to_APy_list = [['i','ac','ap1','fl','ap2','eg','j','dt','dtw','R','P','pot','pax','pax_ij_tot','marketshare_ij','freq','cb_ap1','cb_ap2','Utility', 'prob. MNL']]
+                for row in range(len(connectivity_list)):
+                    if int(float(connectivity_list[row][2])) == int(x) and int(float(connectivity_list[row][4])) == int(y):
+                            APx_to_APy_list = np.append(APx_to_APy_list, [connectivity_list[row]], axis=0)
+                APx_to_APy_list = np.delete(APx_to_APy_list, 0, axis=0)
+                if len(APx_to_APy_list) != 0:
+                    sum_potential = 0
+                    for trip in range(len(APx_to_APy_list)):
+                        sum_potential = sum_potential + float(APx_to_APy_list[trip,11])
+                    #print APx_to_APy_list, sum_potential
+                    for trip in range(len(APx_to_APy_list)):
+                        marketshare = float(APx_to_APy_list[trip,11]) / sum_potential
+                        i = int(float(APx_to_APy_list[trip,0])); j = int(float(APx_to_APy_list[trip,6]))
+                        #print marketshare, i, j
+                        DEMAND_AIR[i,j] = DEMAND_AIR[i,j] + (float(marketshare) * float(mirror_matrix[x,y]))
+                        APx_to_APy_list[trip,12] = (float(marketshare) * float(mirror_matrix[x,y]))
+                        #Matrix_avg_flight_2[i,j][0] = Matrix_avg_flight_2[i,j][0] + (float(marketshare) * float(APx_to_APy_list[trip,1]))
+                        #Matrix_avg_flight_2[i,j][1] = Matrix_avg_flight_2[i,j][1] + (float(marketshare) * t_wait)
+                        #Matrix_avg_flight_2[i,j][2] = Matrix_avg_flight_2[i,j][2] + (float(marketshare) * float(APx_to_APy_list[trip,3]))
+                        #Matrix_avg_flight_2[i,j][3] = Matrix_avg_flight_2[i,j][3] + (float(marketshare) * float(APx_to_APy_list[trip,5]))
+                APx_to_APy_list_total = np.append(APx_to_APy_list_total, APx_to_APy_list, axis=0)
+APx_to_APy_list_total = np.delete(APx_to_APy_list_total, 0, axis=0)                
+
+time.sleep(1)
+print('')
+print( round(DEMAND_AIR[1,0],0), V[1], V[0])
+print (round(DEMAND_AIR[2,0],0), V[2], V[0])
+print( round(DEMAND_AIR[3,0],0), V[3], V[0])
+print( round(DEMAND_AIR[4,0],0), V[4], V[0])
+print( round(DEMAND_AIR[5,0],0), V[5], V[0])
+
+for row in range(len(APx_to_APy_list_total)):
+    APx_to_APy_list_total[row][13] = DEMAND_AIR[int(APx_to_APy_list_total[row][0]), int(APx_to_APy_list_total[row][6])]
+    APx_to_APy_list_total[row][14] = float(APx_to_APy_list_total[row][12]) / float(APx_to_APy_list_total[row][13])
+
+for row in range(len(APx_to_APy_list_total)):
+    i = int(APx_to_APy_list_total[row][0])
+    j = int(APx_to_APy_list_total[row][6])
+    marketshare_ixyj = float(APx_to_APy_list_total[row][14])
+    Matrix_avg_flight_2[i,j][0] = Matrix_avg_flight_2[i,j][0] + (marketshare_ixyj * float(APx_to_APy_list_total[row,1]))
+    Matrix_avg_flight_2[i,j][1] = Matrix_avg_flight_2[i,j][1] + (marketshare_ixyj * time_wait)
+    Matrix_avg_flight_2[i,j][2] = Matrix_avg_flight_2[i,j][2] + (marketshare_ixyj * float(APx_to_APy_list_total[row,3]))
+    Matrix_avg_flight_2[i,j][3] = Matrix_avg_flight_2[i,j][3] + (marketshare_ixyj * float(APx_to_APy_list_total[row,5]))
+
+for i in range_len_V:
+    for j in range_len_V:
+        Matrix_avg_flight_2[i,j][4] = Matrix_avg_flight_2[i,j][0] + Matrix_avg_flight_2[i,j][1] + Matrix_avg_flight_2[i,j][2] + Matrix_avg_flight_2[i,j][3]
+        Matrix_avg_flight_2[i,j][5] = func_t_trip_air_weighted(Matrix_avg_flight_2[i,j][0], Matrix_avg_flight_2[i,j][1], Matrix_avg_flight_2[i,j][2], Matrix_avg_flight_2[i,j][3])
+
+for i in range_len_V:
+    for j in range_len_V:
+        if np.sum(Matrix_avg_flight_2[i,j]) < 0.00001:
+            Matrix_avg_flight_2[i,j] = [float('inf'),float('inf'),float('inf'),float('inf'),float('inf'),float('inf')]
+        
+print('') 
+print( Matrix_avg_flight_2[0,0] ) 
+print( Matrix_avg_flight_2[1,0] ) 
+print( Matrix_avg_flight_2[2,0])   
+print( Matrix_avg_flight_2[3,0]  )
+print( Matrix_avg_flight_2[4,0])  
+print( Matrix_avg_flight_2[5,0])  
+print( Matrix_avg_flight_2[6,0])
+print( Matrix_avg_flight_2[7,0])       
+
+time.sleep(1)
+print('')
+print('log. Сохраняем матрицу переведенного спроса с аэропортов на города')
+#export total_matrix to excel
+df = pd.DataFrame(DEMAND_AIR)
+df.to_excel(excel_writer = "TNDP_Russia/DEMAND_AIR.xlsx")     
 
 
 
+""""---------------------------------------------------------------------------
+--------------------------------     STEP 9.    -------------------------------
+------------------------  Перекладываем на общий спрос -------------------------
+-----------------------------------------------------------------------------"""
+ 
+time.sleep(1)
+print('')
+print('log. ШAГ 9  ------  Перекладываем на общий спрос')
+
+time.sleep(1)
+print('')
+print('log. Трансляция спроса авиаперевозок на общий спрос' )
+           
+def MS_air_predictor(distance):
+    if distance <= 200.:
+        MS_air = float('inf')
+    if distance > 200. and distance < 1500.:
+        MS_air =((1.4940581931E-12*distance**4) - (4.7257341849021E-09*distance**3) + (4.59662481788692E-6*distance**2) - (5.0276000274593E-4*distance))
+        MS_air = min(MS_air, 1.0)  # Ограничиваем долю значением 1
+    if distance >= 1500.:
+        MS_air = 1.00
+    
+    return MS_air
+
+DEMAND_TOTAL = np.zeros((length_V, length_V))
+for i in range_len_V:
+    for j in range_len_V:
+        if i != j:
+            DEMAND_TOTAL[i,j] = DEMAND_AIR[i,j] / MS_air_predictor(road_distance[i,j])
+            #tt_air  = Matrix_avg_flight_2[i,j][5]
+            #tt_car  = func_t_trip_car_estimated( i, j    )
+            #if i == 109 and j == 122:
+                #print 'v_i v_j   |   MSair MSair   |   air car PT'
+                #print i,j, '  |  ' , round(MS_air_predictor(road_distance[i,j]),3), round(MS_air_estimate,3), '  |  ' , round(tt_air,2), round(tt_car,2)
+            #if i == 110 and j == 122:
+                #print i,j, '  |  ' , round(MS_air_predictor(road_distance[i,j]),3), round(MS_air_estimate,3), '  |  ' , round(tt_air,2), round(tt_car,2)
+            #if i == 111 and j == 122:
+                #print i,j, '  |  ' , round(MS_air_predictor(road_distance[i,j]),3), round(MS_air_estimate,3), '  |  ' , round(tt_air,2), round(tt_car,2)
+            #if i == 112 and j == 122:
+                #print i,j, '  |  ' , round(MS_air_predictor(road_distance[i,j]),3), round(MS_air_estimate,3), '  |  ' , round(tt_air,2), round(tt_car,2)
+            #if i == 113 and j == 122:
+                #print i,j, '  |  ' , round(MS_air_predictor(road_distance[i,j]),3), round(MS_air_estimate,3), '  |  ' , round(tt_air,2), round(tt_car,2)            
+            #print round(DEMAND_TOTAL[i,j]), round(DEMAND_AIR[i,j]), MS_air_predictor(road_distance[i,j])
+#'''
+
+time.sleep(1)
+print("")
+print(DEMAND_TOTAL)
+#export total_matrix to excel
+df = pd.DataFrame(DEMAND_TOTAL)
+df.to_excel(excel_writer = "TNDP_Russia/DEMAND_TOTAL.xlsx")     
+          
+
+# print('')
+# print( round(DEMAND_TOTAL[109,122]), V[109], V[122])
+# print( round(DEMAND_TOTAL[110,122]), V[110], V[122])
+# print( round(DEMAND_TOTAL[111,122]), V[111], V[122])
+# print( round(DEMAND_TOTAL[112,122]), V[112], V[122])
+# print( round(DEMAND_TOTAL[113,122]), V[113], V[122] )
+ 
+#'''
