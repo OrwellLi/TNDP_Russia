@@ -95,14 +95,14 @@ print('log. ШAГ 1  ------  Загрузка данных o пассажиро�
 
 
 
-location = ([r'TNDP_Russia/avia_par_vvo.xlsx', 
-             r'TNDP_Russia/avia_par_vko.xlsx',
-             r'TNDP_Russia/avia_par_svo.xlsx',
-             r'TNDP_Russia/avia_par_ovb.xlsx',
-             r'TNDP_Russia/avia_par_led.xlsx',
-             r'TNDP_Russia/avia_par_kzn.xlsx',
-             r'TNDP_Russia/avia_par_ikt.xlsx',
-             r'TNDP_Russia/avia_par_dme.xlsx'])
+location = ([r'TNDP_Russia/Source_data/avia_par_vvo.xlsx', 
+             r'TNDP_Russia/Source_data/avia_par_vko.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_svo.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_ovb.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_led.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_kzn.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_ikt.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_dme.xlsx'])
 
 sheet = (['avia_par_vvo',
           'avia_par_vko',
@@ -165,14 +165,14 @@ time.sleep(1)
 print('')
 print('log. Сохранение таблицы с паксами')
 df = pd.DataFrame(Airport_data)
-df.to_excel(excel_writer = "Airport_data.xlsx")
+df.to_excel(excel_writer = "TNDP_Russia/Support_data/Airport_data.xlsx")
 
 time.sleep(1)
 #save freq
 print('')
 print('log. Сохранение таблицы с полетами')
 df = pd.DataFrame(Airport_data_frequency)
-df.to_excel(excel_writer = "TNDP_Russia/Airport_data_frequency.xlsx")
+df.to_excel(excel_writer = "TNDP_Russia/Support_data/Airport_data_frequency.xlsx")
 
 print('')
 print('Well done')
@@ -187,14 +187,14 @@ print('')
 print('log. ШAГ 2  ------  Очистка и модификация данных')
 print('')
 print('log. Загрузка данных по паксам')
-wb_Airport_data = load_workbook(r'Airport_data.xlsx')
+wb_Airport_data = load_workbook(r'TNDP_Russia/Support_data/Airport_data.xlsx')
 ws_Airport_data = wb_Airport_data['Sheet1']
 Airport_data = np.array([[i.value for i in j] for j in ws_Airport_data['B2':'H14174']])  
 
 time.sleep(1)
 print('')
 print('log. Загрузка данных по полетам')
-wb_Airport_data_frequency = load_workbook(r'TNDP_Russia/Airport_data_frequency.xlsx')
+wb_Airport_data_frequency = load_workbook(r'TNDP_Russia/Support_data/Airport_data_frequency.xlsx')
 ws_Airport_data_frequency = wb_Airport_data_frequency['Sheet1']
 
 data_rows = []
@@ -256,7 +256,7 @@ print('     по категории  : аэропорт по коду ИАТА')
 print('     топографически: страна')
 print('     географически : широта, долгота')
 
-wb_Aiport_info = load_workbook(r'TNDP_Russia/airportinformation3.xlsx')
+wb_Aiport_info = load_workbook(r'TNDP_Russia/Source_data/airportinformation3.xlsx')
 ws_Airport_info = wb_Aiport_info['airportdata']
 
 name = np.array([[i.value for i in j] for j in ws_Airport_info['B2':'GPG2']]) 
@@ -525,7 +525,7 @@ time.sleep(1)
 print('')
 print('log. Сохранение полной матрицы')
 df = pd.DataFrame(total_matrix).T
-df.to_excel(excel_writer="TNDP_Russia/DM_air_matrix.xlsx")
+df.to_excel(excel_writer="TNDP_Russia/Support_data/DM_air_matrix.xlsx")
 
 
 
@@ -593,7 +593,7 @@ time.sleep(1)
 print('')
 print('log. Сохранение отзеркаленой матрицы')
 df = pd.DataFrame(total_mirror_matrix).T
-df.to_excel(excel_writer="TNDP_Russia/DM_air_matrix_mirror.xlsx")            
+df.to_excel(excel_writer="TNDP_Russia/Support_data/DM_air_matrix_mirror.xlsx")            
   
 time.sleep(1)          
 #export total_matrix to excel
@@ -615,7 +615,7 @@ for i in range(OD_matrix_frequency.shape[0]):
                 
                 
 df = pd.DataFrame(freq_matrix, index=list_of_airports, columns=list_of_airports)
-df.to_excel(excel_writer="TNDP_Russia/freq_air_matrix.xlsx", sheet_name="Flight Frequencies")
+df.to_excel(excel_writer="TNDP_Russia/Support_data/freq_air_matrix.xlsx", sheet_name="Flight Frequencies")
 
 
 time.sleep(1)        
@@ -637,7 +637,7 @@ for i in range(mirror_matrix_freq.shape[0]):
                 print(f"Нечисловое значение в [{i},{j}]: {value}")
                 
 df_mirror = pd.DataFrame(mirror_freq_matrix, index=list_of_airports, columns=list_of_airports)
-df_mirror.to_excel(excel_writer="TNDP_Russia/freq_air_matrix_mirror.xlsx", sheet_name="Mirrored Flight Frequencies")
+df_mirror.to_excel(excel_writer="TNDP_Russia/Support_data/freq_air_matrix_mirror.xlsx", sheet_name="Mirrored Flight Frequencies")
 
 print('')
 print ('Well done')
@@ -674,7 +674,7 @@ time.sleep(1)
 print('')
 print('log. Загружаем таблицу растояний ЖД путей российских городов ') 
 print('')
-wb = load_workbook(r'TNDP_Russia/Core_cities_geography.xlsx')
+wb = load_workbook(r'TNDP_Russia/Source_data/Core_cities_geography.xlsx')
 ws_vertices = wb['Duration_road']
 
 length_V = 8
@@ -746,7 +746,7 @@ for i in range(len(City_to_Airport_Distance)):
         City_to_Airport_Distance[i,j] = haversine(V_lat[i],V_lon[i],airport_information[:,3][j],airport_information[:,4][j])
 
 df = pd.DataFrame(City_to_Airport_Distance)
-df.to_excel(excel_writer = "TNDP_Russia/City_to_Airport_Distance.xlsx")
+df.to_excel(excel_writer = "TNDP_Russia/Support_data/City_to_Airport_Distance.xlsx")
 
 
 
@@ -768,7 +768,7 @@ for i in range(len(City_to_Airport_Distance)):
         if City_to_Airport_Distance[i,j] > maximum_potential_access_egress_dist:
             City_to_Airport_Duration[i,j] = float('inf')
 
-wb = load_workbook(r'TNDP_Russia/City_to_Airport_Duration.xlsx')
+wb = load_workbook(r'TNDP_Russia/Support_data/City_to_Airport_Duration.xlsx')
 ws = wb['Sheet1']
 City_to_Airport_Duration = np.array([[i.value for i in j] for j in ws['B2':'I9']], dtype=object)
 
@@ -826,19 +826,19 @@ for v in range(len(City_to_Airport_Duration)):
             print(counter, '(', v, ',', ap, ')')
             if saver == 19:
                 df_dur = pd.DataFrame(City_to_Airport_Duration)
-                df_dur.to_excel(excel_writer="TNDP_Russia/City_to_Airport_Duration.xlsx")
+                df_dur.to_excel(excel_writer="TNDP_Russia/Suppot_data/City_to_Airport_Duration.xlsx")
 
 df_dur = pd.DataFrame(City_to_Airport_Duration)
-df_dur.to_excel(excel_writer="TNDP_Russia/City_to_Airport_Duration.xlsx")
+df_dur.to_excel(excel_writer="TNDP_Russia/Support_data/City_to_Airport_Duration.xlsx")
 
 df_dur = pd.DataFrame(airport_information)
-df_dur.to_excel(excel_writer="TNDP_Russia/airport_information.xlsx")
+df_dur.to_excel(excel_writer="TNDP_Russia/Support_data/airport_information.xlsx")
 
 time.sleep(1)
 #""" #only activated in first run
 print('')
 print('log. Загрузка City - to - Airport матрицы расстояний')
-wb = load_workbook(r'TNDP_Russia/City_to_Airport_Duration.xlsx')
+wb = load_workbook(r'TNDP_Russia/Support_data/City_to_Airport_Duration.xlsx')
 ws  =    wb['Sheet1']
 City_to_Airport_Duration = np.array([[i.value for i in j] for j in ws['B2':'I9']],dtype=object)
 
@@ -855,7 +855,7 @@ print('log. ШAГ 5  ------  Разработка всех возможных м
 
 print('')
 print('log. Загружаем данные о расстояниях между городами (центры)' )
-wb_road_distances = load_workbook(r'TNDP_Russia/Core_cities_geography.xlsx')
+wb_road_distances = load_workbook(r'TNDP_Russia/Source_data/Core_cities_geography.xlsx')
 ws_road_distances = wb_road_distances['Distance_road']
 # road_distance = np.array([[i.value for i in j] for j in ws_road_distances['G7':'N14']], dtype=float)
 
@@ -887,12 +887,12 @@ road_distance = np.array(road_distance, dtype=float)
 time.sleep(1)
 print('')
 print('log. Загружаем данные о временных интервалах между городами' )
-wb_road_duration = load_workbook(r'TNDP_Russia/Core_cities_geography.xlsx')
+wb_road_duration = load_workbook(r'TNDP_Russia/Source_data/Core_cities_geography.xlsx')
 ws_road_duration = wb_road_distances['Duration_road']
 # road_duration = np.array([[i.value for i in j] for j in ws_road_duration['G7':'N14']], dtype=float)
 
 #-------------------------------------#
-wb_road_duration = load_workbook(r'TNDP_Russia/Core_cities_geography.xlsx')
+wb_road_duration = load_workbook(r'TNDP_Russia/Source_data/Core_cities_geography.xlsx')
 ws_road_duration = wb_road_duration['Duration_road']  # Fixed typo: use wb_road_duration
 road_duration = []
 for row in ws_road_duration['G7':'N14']:
