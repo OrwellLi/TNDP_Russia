@@ -31,48 +31,61 @@ import random
 #--------------------------------
 #Загрузка параметров
 
-average_car_speed = 110. #[km/h]
-max_catchment_area_perimeter = 5. #[часы]
-maximum_potential_access_egress_dist = average_car_speed * max_catchment_area_perimeter
-max_accsess_egress_time = 2.
+average_car_speed = 90. #[km/h]
+max_catchment_area_perimeter = 3. #[часы] Максимальное время, которое пассажир готов потратить на доступ к аэропорту или выход из него (3 часов).
+maximum_potential_access_egress_dist = average_car_speed * max_catchment_area_perimeter #Определяет зону охвата аэропорта
+max_accsess_egress_time = 3. #Максимальное время доступа/выхода для включения аэропорта в зону охвата города (2 часа).
 
-VoTime_access    = 67.5 #ценность времени до прибытия в ап(из дома в ап)
-VoTime_waiting   = 75   #ценность времени ожидания
-VoTime_invehicle = 50   #нормальное время в дороге
-VoTime_transfer  = 50   #нормальное время во время трансфера
-VoTime_egress    = 67.5 #ценность времени после выхода из ап(из ап до дома)
+#(проверить критерии)
 
-weight_acc = VoTime_access / VoTime_invehicle    #распределение весов и перевод их в нормальные единицы, так как ценность времени измеряется в Руб/ч
+
+VoTime_access    = 2500 #ценность времени до прибытия в ап(из дома в ап)
+VoTime_waiting   = 4000   #ценность времени ожидания
+VoTime_invehicle = 1000   #нормальное время в дороге
+VoTime_transfer  = 1000   #нормальное время во время пересадки
+VoTime_egress    = 2500 #ценность времени после выхода из ап(из ап до дома)
+
+
+# Эти параметры используются для расчета весов (weight_*), которые влияют на взвешенное время поездки (func_t_trip_air_weighted)
+# Вес отражает, насколько каждый этап поездки "ощущается" пассажиром. Например, ожидание (weight_wait = 1.5) считается в 1.5 раза более "болезненным", чем время в полете.
+
+weight_acc = VoTime_access / VoTime_invehicle    #распределение весов и перевод их в нормальные единицы
 weight_wait = VoTime_waiting / VoTime_invehicle
 weight_inv = 1.0
 weight_tran = VoTime_transfer / VoTime_invehicle
 weight_egr = VoTime_egress / VoTime_invehicle
 
+# Минимальные, средние и максимальные значения времени доступа, ожидания, пересадки и выхода.
 time_access = 2. #time from leaving home to seat in plane
-time_dec = 1.    #time from leaving plane to reach home
+time_dec = 1.5    #time from leaving plane to reach home
 fac_dt = 1         #множитель времени, для поправки момента искревления пути
-distance_acc = 50  #расстояние доступа
-distance_dec = 50  #расстояние выхода
-speed_kreys = 1800  #крейсерская скорость
+distance_acc = 60  #расстояние доступа
+distance_dec = 60  #расстояние выхода
+speed_kreys = 2300  #крейсерская скорость
 
 #матрица времени для разных режимов[hours]
-time_acc_m = [0.5, 0.25, 0.0]
-time_wait_m = [2., 0.5, 0.0]
-time_transfer_m = [2., 1.5, 0.0]
+time_acc_m = [1.5, 1.0, 0.1]
+time_wait_m = [1.5, 0.5, 0.0]
+time_transfer_m = [1.5, 1.0, 0.0]
 time_egres_m = [1., 0.5, 0.0]
 
 time_wait = time_wait_m[0]
 
-lowerboundary_distance = 300. #граничное условие для дистанции(мин дистанция для учета маршрута)
-lowerboundary_duration = 3.   #граничное условие для времени(минимальная длительность)
+#Минимальное расстояние (300 км) и время поездки (3 часа), при которых рассматриваются авиаперевозки.
+lowerboundary_distance = 3000. #граничное условие для дистанции(мин дистанция для учета маршрута)
+lowerboundary_duration = 5.   #граничное условие для времени(минимальная длительность)
 
 
 fc_detour = [1., 1.09, 1.20] #plane, HSR, car коэффициент удлинения пути для различного транспорта
-vehicle_speed = [1800., 220., 110.] #plane, HSR, car
+vehicle_speed = [2300., 220., 90.] #plane, HSR, car
 
-daily_operational_hours = 22.0 #часы работы сети в день
+daily_operational_hours = 24.0 #часы работы сети в день
 
 #веса в функции полезности(определить xxx)
+#a1 (отрицательный) уменьшает полезность с увеличением времени доступа (tt_a) и выхода (tt_e).
+#a2 (положительный) усиливает влияние пересечения границы (BC_ap1, BC_ap2), если оно есть.
+#a3 (отрицательный) уменьшает полезность с увеличением времени ожидания (DST).
+
 a1 = -1 * 2 #вес общего времени поездки (отрицательный – чем больше время, тем хуже). 
 a2 = +1 * 3  #вес частоты отправлений (положительный – чем чаще рейсы, тем лучше).
 a3 = -1 * -1 #вес пересечения границы (отрицательный – усложняет поездку).
@@ -149,7 +162,7 @@ with tqdm(total=len(location), desc="Processing", bar_format="{l_bar}{bar} [ tim
                     Table = np.delete(Table, column - correction, axis=1)
                     correction = correction + 1
 
-        #собираем нужную информацию из табллиц
+        #собираем нужную информацию из таблиц
         for row in range(len(Table)):
             if Table[row][0] == 'PAS':
                 if Table[row][1] == 'PAS_CRD':
@@ -1051,9 +1064,9 @@ def func_probability(R_x,R_sum_x): #find flight specific probabilities
 #(пересечения границ, в данном случае не используется, так как все города в России).
 def func_utility_flight(tt_a, tt_e, DST, BC_ap1, BC_ap2): #find flight specific probabilities
     
-    # U = a1*( ( tt_a*(a2*BC_ap1))*(tt_e*(a2*BC_ap2) ) ) + (a3*DST)
+    #U = a1*( ( tt_a*(a2*BC_ap1))*(tt_e*(a2*BC_ap2) ) ) + (a3*DST)
     U = a1*( ( tt_a*(a2))*(tt_e*(a2) ) ) + (a3*DST)
-    return U 
+    return U
 
 
 #Рассчитать вероятность выбора маршрута на основе полезности (utility maximization).
@@ -1318,9 +1331,25 @@ time.sleep(1)
 print('')
 print('log. Сохраняем матрицу переведенного спроса с аэропортов на города')
 #export total_matrix to excel
-df = pd.DataFrame(DEMAND_AIR)
-df.to_excel(excel_writer = "TNDP_Russia/DEMAND_AIR.xlsx")     
+df = pd.DataFrame(DEMAND_AIR, index=list_of_airports[:length_V], columns=list_of_airports[:length_V])
+df.to_excel(excel_writer = "TNDP_Russia/Total_output_data/DEMAND_AIR.xlsx")     
 
+# Новая матрица для времени "дом-аэропорт-отель-аэропорт-дом"
+DEMAND_TOTAL_TRIP_TIME = np.zeros((length_V, length_V))
+
+for i in range_len_V:
+    for j in range_len_V:
+        if i != j:
+            # Время туда (дом-аэропорт-отель)
+            time_to_destination = Matrix_avg_flight_2[i,j][4] if Matrix_avg_flight_2[i,j][4] != float('inf') else 0
+            # Время обратно (отель-аэропорт-дом)
+            # time_back = Matrix_avg_flight_2[j,i][4] if Matrix_avg_flight_2[j,i][4] != float('inf') else 0
+            # Суммарное время поездки туда и обратно
+            DEMAND_TOTAL_TRIP_TIME[i,j] = time_to_destination
+
+# Экспорт матрицы
+df = pd.DataFrame(DEMAND_TOTAL_TRIP_TIME, index=list_of_airports[:length_V], columns=list_of_airports[:length_V])
+df.to_excel(excel_writer="TNDP_Russia/Total_output_data/DEMAND_TOTAL_TRIP_TIME.xlsx")
 
 
 """"---------------------------------------------------------------------------
@@ -1342,6 +1371,8 @@ def MS_air_predictor(distance):
     if distance > 200. and distance < 1500.:
         MS_air =((1.4940581931E-12*distance**4) - (4.7257341849021E-09*distance**3) + (4.59662481788692E-6*distance**2) - (5.0276000274593E-4*distance))
         MS_air = min(MS_air, 1.0)  # Ограничиваем долю значением 1
+    #если пределывать под сверхзвук, то меняем долю в 1500 до 5%
+    
     if distance >= 1500.:
         MS_air = 1.00
     
@@ -1372,8 +1403,8 @@ time.sleep(1)
 print("")
 print(DEMAND_TOTAL)
 #export total_matrix to excel
-df = pd.DataFrame(DEMAND_TOTAL)
-df.to_excel(excel_writer = "TNDP_Russia/DEMAND_TOTAL.xlsx")     
+df = pd.DataFrame(DEMAND_TOTAL, index=list_of_airports[:length_V], columns=list_of_airports[:length_V])
+df.to_excel(excel_writer = "TNDP_Russia/Total_output_data/DEMAND_TOTAL.xlsx")     
           
 
 # print('')
