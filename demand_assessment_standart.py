@@ -31,10 +31,10 @@ import random
 #--------------------------------
 #Загрузка параметров
 
-average_car_speed = 90. #[km/h]
-max_catchment_area_perimeter = 3. #[часы] Максимальное время, которое пассажир готов потратить на доступ к аэропорту или выход из него (3 часов).
+average_car_speed = 110. #[km/h]
+max_catchment_area_perimeter = 4. #[часы] Максимальное время, которое пассажир готов потратить на доступ к аэропорту или выход из него (3 часов).
 maximum_potential_access_egress_dist = average_car_speed * max_catchment_area_perimeter #Определяет зону охвата аэропорта
-max_accsess_egress_time = 3. #Максимальное время доступа/выхода для включения аэропорта в зону охвата города (2 часа).
+max_accsess_egress_time = 4. #Максимальное время доступа/выхода для включения аэропорта в зону охвата города (2 часа).
 
 #(проверить критерии)
 
@@ -57,7 +57,7 @@ weight_egr = VoTime_egress / VoTime_invehicle
 
 # Минимальные, средние и максимальные значения времени доступа, ожидания, пересадки и выхода.
 time_access = 3. #time from leaving home to seat in plane
-time_dec = 2.    #time from leaving plane to reach home
+time_dec = 3.    #time from leaving plane to reach home
 fac_dt = 1         #множитель времени, для поправки момента искревления пути
 distance_acc = 60  #расстояние доступа
 distance_dec = 60  #расстояние выхода
@@ -73,7 +73,7 @@ time_wait = time_wait_m[0]
 
 #Минимальное расстояние (300 км) и время поездки (3 часа), при которых рассматриваются авиаперевозки.
 lowerboundary_distance = 400. #граничное условие для дистанции(мин дистанция для учета маршрута)
-lowerboundary_duration = 3.   #граничное условие для времени(минимальная длительность)
+lowerboundary_duration = 4.   #граничное условие для времени(минимальная длительность)
 
 
 fc_detour = [1., 1.09, 1.20] #plane, HSR, car коэффициент удлинения пути для различного транспорта
@@ -115,7 +115,22 @@ location = ([r'TNDP_Russia/Source_data/avia_par_vvo.xlsx',
              r'TNDP_Russia/Source_data/avia_par_led.xlsx',
              r'TNDP_Russia/Source_data/avia_par_kzn.xlsx',
              r'TNDP_Russia/Source_data/avia_par_ikt.xlsx',
-             r'TNDP_Russia/Source_data/avia_par_dme.xlsx'])
+             r'TNDP_Russia/Source_data/avia_par_dme.xlsx',
+             
+             r'TNDP_Russia/Source_data/avia_par_add.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_auh.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_bah.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_cmn.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_dwc.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_dxb.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_hrg.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_iku.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_kwi.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_oss.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_tju.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_utp.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_shj.xlsx',
+             r'TNDP_Russia/Source_data/avia_par_ssh.xlsx'])
 
 sheet = (['avia_par_vvo',
           'avia_par_vko',
@@ -124,7 +139,21 @@ sheet = (['avia_par_vvo',
           'avia_par_led', 
           'avia_par_kzn', 
           'avia_par_ikt', 
-          'avia_par_dme'])
+          'avia_par_dme',
+          'avia_par_add',
+          'avia_par_auh',
+          'avia_par_bah',
+          'avia_par_cmn',
+          'avia_par_dwc',
+          'avia_par_dxb',
+          'avia_par_hrg',
+          'avia_par_iku',
+          'avia_par_kwi',
+          'avia_par_oss',
+          'avia_par_tju',
+          'avia_par_utp',
+          'avia_par_shj',
+          'avia_par_ssh',])
 
 Airport_data = [['Unit', 'Msr', 'orig_ap', 'dest_ap', 'pax']]
 Airport_data_frequency = [['Unit', 'Msr', 'orig_ap', 'dest_ap', 'flights']]
@@ -178,14 +207,14 @@ time.sleep(1)
 print('')
 print('log. Сохранение таблицы с паксами')
 df = pd.DataFrame(Airport_data)
-df.to_excel(excel_writer = "TNDP_Russia/Support_data/Airport_data_standart.xlsx")
+df.to_excel(excel_writer = "TNDP_Russia/Support_data/Airport_data.xlsx")
 
 time.sleep(1)
 #save freq
 print('')
 print('log. Сохранение таблицы с полетами')
 df = pd.DataFrame(Airport_data_frequency)
-df.to_excel(excel_writer = "TNDP_Russia/Support_data/Airport_data_frequency_standart.xlsx")
+df.to_excel(excel_writer = "TNDP_Russia/Support_data/Airport_data_frequency.xlsx")
 
 print('')
 print('Well done')
@@ -200,14 +229,14 @@ print('')
 print('log. ШAГ 2  ------  Очистка и модификация данных')
 print('')
 print('log. Загрузка данных по паксам')
-wb_Airport_data = load_workbook(r'TNDP_Russia/Support_data/Airport_data_standart.xlsx')
+wb_Airport_data = load_workbook(r'TNDP_Russia/Support_data/Airport_data.xlsx')
 ws_Airport_data = wb_Airport_data['Sheet1']
 Airport_data = np.array([[i.value for i in j] for j in ws_Airport_data['B2':'H14174']])  
 
 time.sleep(1)
 print('')
 print('log. Загрузка данных по полетам')
-wb_Airport_data_frequency = load_workbook(r'TNDP_Russia/Support_data/Airport_data_frequency_standart.xlsx')
+wb_Airport_data_frequency = load_workbook(r'TNDP_Russia/Support_data/Airport_data_frequency.xlsx')
 ws_Airport_data_frequency = wb_Airport_data_frequency['Sheet1']
 
 data_rows = []
@@ -250,9 +279,9 @@ for row in range(len(Airport_data)-1):
 
 set_of_airports.discard('None')
 set_of_airports.discard('')
-# print(set_of_airports)
+print(set_of_airports)
     
-Num_airports  =  len(set_of_airports)
+Num_airports  = len(set_of_airports)
 
 list_Airport_temp = sorted(list(set_of_airports))
 
@@ -325,10 +354,14 @@ for row in range(len(list_of_airports)):
             airport_information[row][3] = Airport_latitude[column]
             airport_information[row][4] = Airport_longitude[column]
             
+            
+print(len(airport_information))
 
 #обновляем последовательность ап в коде IATA
-for n in range(Num_airports):
-    list_of_airports[n] = airport_information[n][0]
+# for n in range(Num_airports):
+#     list_of_airports[n] = airport_information[n][0]
+
+print(list_of_airports)
 
 def Airport_index_num(a): #находим индекс аэропорта
     try:
@@ -656,6 +689,16 @@ print('')
 print ('Well done')
 
 
+print("Mirror matrix for Russian airports:")
+russian_airports = ['DME', 'IKT', 'KZN', 'LED', 'OVB', 'SVO', 'VKO', 'VVO']
+for ap1 in russian_airports:
+    for ap2 in russian_airports:
+        i = Airport_index_num(ap1)
+        j = Airport_index_num(ap2)
+        if i != -1 and j != -1:
+            print(f"{ap1}-{ap2}: {mirror_matrix[i,j]}")
+
+
 
 '''--------------------------------------------------------
 -----------------------   ШAГ 3    -------------------------
@@ -685,39 +728,45 @@ print('')
 
 time.sleep(1)
 print('')
-print('log. Загружаем таблицу растояний ЖД путей российских городов ') 
+print('log. Загружаем таблицу расcтояний путей российских городов ') 
 print('')
 wb = load_workbook(r'TNDP_Russia/Source_data/Core_cities_geography.xlsx')
 ws_vertices = wb['Duration_road']
 
-length_V = 8
-range_len_V = range(8)
+length_V = ws_vertices.max_column - 6  # Subtract 6 to account for G to N (0-based index adjustment)
+range_len_V = range(length_V)
 
-V = np.array([[i.value for i in j] for j in ws_vertices['G2':'N2']]) 
+print()
+print()
+print(range_len_V)
+print()
+
+
+V = np.array([[i.value for i in j] for j in ws_vertices['G2':'AB2']]) 
 XX = np.zeros(length_V, dtype=object)
 for i in range(len(XX)):
     XX[i] = V[0,i]
-V = XX #vertex latitudes
+V = XX #cities
 
-V_country = np.array([[i.value for i in j] for j in ws_vertices['G3':'N3']]) 
+V_country = np.array([[i.value for i in j] for j in ws_vertices['G3':'AB3']]) 
 XX = np.zeros(length_V, dtype=object)
 for i in range(len(XX)):
     XX[i] = V_country[0,i]
-V_country = XX #vertex latitudes
+V_country = XX #countries
 
-V_pop = np.array([[i.value for i in j] for j in ws_vertices['G6':'N6']]) 
+V_pop = np.array([[i.value for i in j] for j in ws_vertices['G6':'AB6']]) 
 XX = np.zeros(length_V)
 for i in range(len(XX)):
     XX[i] = V_pop[0,i]
 V_pop = XX #vertex populations
 
-V_lat = np.array([[i.value for i in j] for j in ws_vertices['G4':'N4']]) 
+V_lat = np.array([[i.value for i in j] for j in ws_vertices['G4':'AB4']]) 
 XX = np.zeros(length_V)
 for i in range(len(XX)):
     XX[i] = V_lat[0,i]
 V_lat = XX #vertex latitudes
 
-V_lon = np.array([[i.value for i in j] for j in ws_vertices['G5':'N5']]) 
+V_lon = np.array([[i.value for i in j] for j in ws_vertices['G5':'AB5']]) 
 XX = np.zeros(length_V)
 for i in range(len(XX)):
     XX[i] = V_lon[0,i]
@@ -734,6 +783,8 @@ for row in range(len(Airport_lon)):
 #build OD matrices for airport to city
 City_to_Airport_Distance = np.zeros((len(V), len(airport_information))) #greater circle distance
 City_to_Airport_Duration = np.zeros((len(V), len(airport_information))) #duration by car
+
+
 
 #define haversine formula
 def haversine(lat_i, lon_i, lat_j, lon_j):
@@ -754,18 +805,25 @@ time.sleep(1)
 #calculate greater circle distances matrix
 print('')
 print( 'log. Строим таблицу расстояний City - to - Airport' )
-for i in range(len(City_to_Airport_Distance)):
-    for j in range(len(City_to_Airport_Distance[0])):
-        City_to_Airport_Distance[i,j] = haversine(V_lat[i],V_lon[i],airport_information[:,3][j],airport_information[:,4][j])
-
+for v in range(len(V)):
+    for ap in range(len(airport_information)):
+        if (V_lat[v] is None or V_lon[v] is None or 
+            airport_information[ap, 3] is None or airport_information[ap, 4] is None):
+            City_to_Airport_Duration[v, ap] = float('inf')
+            print(f"Invalid coordinates for {V[v]} or {airport_information[ap, 0]}")
+        else:
+            City_to_Airport_Distance[v, ap] = haversine(float(V_lat[v]), float(V_lon[v]), 
+                                                     float(airport_information[ap, 3]), float(airport_information[ap, 4]))
+            
+# print(City_to_Airport_Distance)
 df = pd.DataFrame(City_to_Airport_Distance)
-df.to_excel(excel_writer = "TNDP_Russia/Support_data/City_to_Airport_Distance_standart.xlsx")
+df.to_excel(excel_writer = "TNDP_Russia/Support_data/City_to_Airport_Distance.xlsx")
 
 
 
-# '''--------------------------------------------------------
-# -----------------------   ШAГ 4    -------------------------
-# --- Расчет времени доступа между городами и аэропортами ---'''
+'''--------------------------------------------------------
+-----------------------   ШAГ 4    -------------------------
+--- Расчет времени доступа между городами и аэропортами ---'''
 
 
 time.sleep(1)
@@ -775,77 +833,66 @@ print('log. ШAГ 4  ------  Расчет времени доступа межд
 print('')
 print('log. Загрузка CIty - to - Airport расстояний через API(OpenRouteService)')
 
+# print()
+# print(City_to_Airport_Distance)
+
 #define infeasible city-airport combinations
 for i in range(len(City_to_Airport_Distance)):
     for j in range(len(City_to_Airport_Distance[0])):
         if City_to_Airport_Distance[i,j] > maximum_potential_access_egress_dist:
             City_to_Airport_Duration[i,j] = float('inf')
+            
+print()
+# print(City_to_Airport_Distance)
 
 wb = load_workbook(r'TNDP_Russia/Support_data/City_to_Airport_Duration_standart.xlsx')
 ws = wb['Sheet1']
-City_to_Airport_Duration = np.array([[i.value for i in j] for j in ws['B2':'I9']], dtype=object)
+data = np.array([[i.value for i in j] for j in ws['B2':f'W{2 + len(V) - 1}']])  # Dynamic range based on V
+City_to_Airport_Duration = np.full((len(V), len(airport_information)), float('inf'), dtype=float)
+for v in range(len(V)):
+    for ap in range(len(airport_information)):
+        val = data[v, ap] if v < len(data) and ap < len(data[0]) and data[v, ap] is not None else None
+        City_to_Airport_Duration[v, ap] = float(val) if val is not None else float('inf')
+
+time.sleep(3)
+print()
+print("-------------------------------------")
+print(City_to_Airport_Duration)
+
+time.sleep(3)
+print()
+print("-------------------------------------")
+print(set_of_airports)
 
 #determine access and egress times
 saver = 0
 counter = 0
 for v in range(len(City_to_Airport_Duration)):
     for ap in range(len(City_to_Airport_Duration[0])):
-        value = City_to_Airport_Duration[v, ap]
-        if isinstance(value, str):
-            if value.lower() == "inf":
-                value = float('inf')
-            else:
-                value = float(value)
-        else:
-            value = float(value)
-        if value < 0.000001:
-            print('')
-            print('от', ap, airport_information[ap, 1], '(аэропорта) до', v, V[v], '(города)')
-            print(f"Coords for city={V[v]}, airport={airport_information[ap, 1]}: {((V_lon[v], V_lat[v]), (airport_information[ap, 3], airport_information[ap, 4]))}")
-            distance = haversine(V_lat[v], V_lon[v], float(airport_information[ap, 3]), float(airport_information[ap, 4]))
-            if distance * 1000 > 5900000:
-                City_to_Airport_Duration[v, ap] = float('inf')
-                print(f"Distance {distance:.2f} km exceeds limit, setting to inf")
-                continue
-            # if airport_information[ap, 1] == "Irkutsk Airport" and distance > 500:
-            #     City_to_Airport_Duration[v, ap] = float('inf')
-            #     print(f"Excluding Irkutsk Airport due to distance {distance:.2f} km")
-            #     continue
-            randomizer = 0
-            if randomizer == 0:
-                coords = ((V_lon[v], V_lat[v]), (airport_information[ap, 4], airport_information[ap, 3]))
-                client = openrouteservice.Client(key='5b3ce3597851110001cf62481a403ebd11a94d8fbf2320c2f8eac293')
-                try:
-                    routes = client.directions(
-                        coordinates=coords,
-                        profile='driving-car',
-                        radiuses=[30000, 30000],  # Increased to 30 km
-                        format='geojson',
-                        validate=False,
-                    )
-                    duration = routes['features'][0]['properties']['segments'][0]['duration'] / 60 / 60
-                    if duration < max_catchment_area_perimeter:
-                        City_to_Airport_Duration[v, ap] = duration
-                    else:
-                        City_to_Airport_Duration[v, ap] = float('inf')
-                except openrouteservice.exceptions.ApiError as e:
-                    print(f"API Error for city={V[v]}, airport={airport_information[ap, 1]}: {e}. Setting to inf.")
-                    City_to_Airport_Duration[v, ap] = float('inf')
-                except Exception as e:
-                    print(f"Unexpected error for city={V[v]}, airport={airport_information[ap, 1]}: {e}. Setting to inf.")
-                    City_to_Airport_Duration[v, ap] = float('inf')
-            counter = counter + 1
-            saver = saver + 1
-            print(counter, '(', v, ',', ap, ')')
-            if saver == 19:
-                df_dur = pd.DataFrame(City_to_Airport_Duration)
-                df_dur.to_excel(excel_writer="TNDP_Russia/Suppot_data/City_to_Airport_Duration_standart.xlsx")
-
-df_dur = pd.DataFrame(City_to_Airport_Duration)
-df_dur.to_excel(excel_writer="TNDP_Russia/Support_data/City_to_Airport_Duration_standart.xlsx")
+        distance = City_to_Airport_Distance[v, ap]
+        if distance > 660:  # New threshold
+            City_to_Airport_Duration[v, ap] = float('inf')
+            print(f"Distance {distance:.2f} km exceeds 660 km, setting to inf for {V[v]} to {airport_information[ap, 0]}")
+            continue
+        coords = ((V_lon[v], V_lat[v]), (airport_information[ap, 4], airport_information[ap, 3]))
+        try:
+            client = openrouteservice.Client(key='5b3ce3597851110001cf62481a403ebd11a94d8fbf2320c2f8eac293')
+            routes = client.directions(coordinates=coords, profile='driving-car', radiuses=[50000, 50000], format='geojson', validate=False)
+            duration = routes['features'][0]['properties']['segments'][0]['duration'] / 60 / 60
+            City_to_Airport_Duration[v, ap] = duration if duration < max_catchment_area_perimeter else float('inf')
+        except Exception as e:
+            print(f"API Error for {V[v]} to {airport_information[ap, 1]}: {e}. Using distance-based fallback.")
+            City_to_Airport_Duration[v, ap] = distance / average_car_speed if distance <= maximum_potential_access_egress_dist else float('inf')
+        counter += 1
+        saver += 1
+        if saver % 24 == 0:
+            df_dur = pd.DataFrame(City_to_Airport_Duration, index=V, columns=[info[0] for info in airport_information])
+            df_dur.to_excel("TNDP_Russia/Support_data/City_to_Airport_Duration_standart.xlsx")
+df_dur = pd.DataFrame(City_to_Airport_Duration, index=V, columns=[info[0] for info in airport_information])
+df_dur.to_excel("TNDP_Russia/Support_data/City_to_Airport_Duration.xlsx")
 
 df_dur = pd.DataFrame(airport_information)
-df_dur.to_excel(excel_writer="TNDP_Russia/Support_data/airport_information_standart.xlsx")
+df_dur.to_excel(excel_writer="TNDP_Russia/Support_data/Airport_information.xlsx")
 
 time.sleep(1)
 #""" #only activated in first run
@@ -853,7 +900,7 @@ print('')
 print('log. Загрузка City - to - Airport матрицы расстояний')
 wb = load_workbook(r'TNDP_Russia/Support_data/City_to_Airport_Duration_standart.xlsx')
 ws  =    wb['Sheet1']
-City_to_Airport_Duration = np.array([[i.value for i in j] for j in ws['B2':'I9']],dtype=object)
+City_to_Airport_Duration = np.array([[i.value for i in j] for j in ws['B2':'W23']],dtype=object)
 
 
 '''--------------------------------------------------------
@@ -876,7 +923,7 @@ ws_road_distances = wb_road_distances['Distance_road']
 
 #-------------------------------------#
 road_distance = []
-for row in ws_road_distances['G7':'N14']:
+for row in ws_road_distances['G7':'AB28']:
     row_data = []
     for cell in row:
         value = cell.value
@@ -908,7 +955,7 @@ ws_road_duration = wb_road_distances['Duration_road']
 wb_road_duration = load_workbook(r'TNDP_Russia/Source_data/Core_cities_geography.xlsx')
 ws_road_duration = wb_road_duration['Duration_road']  # Fixed typo: use wb_road_duration
 road_duration = []
-for row in ws_road_duration['G7':'N14']:
+for row in ws_road_duration['G7':'AB28']:
     row_data = []
     for cell in row:
         value = cell.value
@@ -950,9 +997,9 @@ for i in range(len(airport_information)):
     for j in range(len(airport_information)):
         if mirror_matrix[i,j] != ':':
             AP_to_AP_dis_gc = haversine(float(airport_information[i, 3]), float(airport_information[i, 4]),
-                                       float(airport_information[j, 3]), float(airport_information[j, 4]))
+                                    float(airport_information[j, 3]), float(airport_information[j, 4]))
             T_inv_air[i,j] = func_t_inv_air(AP_to_AP_dis_gc)
-            
+                
 #verification of flight duration  
 #print airport_information[192][0], airport_information[367][0], str(datetime.timedelta(seconds=T_inv_air[192,367]*60*60))
 #print airport_information[192][0], airport_information[286][0], str(datetime.timedelta(seconds=T_inv_air[192,286]*60*60))
@@ -966,13 +1013,31 @@ print('')
 print( 'log. Определение городов в зоне досягаемости аэропортов (catchment area)' )                     
 #build scatter lists for each city V
 scatter_list_City_to_Airport = np.zeros((length_V,1), dtype=object)
-for v in range_len_V:
+if 'City_to_Airport_Duration' not in globals() or City_to_Airport_Duration is None:
+    number_of_airports = len(airport_information)
+    City_to_Airport_Duration = np.full((len(V), len(airport_information)), float('inf'))
+
+for v in range(length_V):
     scatter_AP = list()
     for ap in range(len(airport_information)):
-        if City_to_Airport_Duration[v][ap] != 'inf' and City_to_Airport_Duration[v][ap] < max_accsess_egress_time :
-            scatter_AP = np.append(scatter_AP, ap, axis=None)
-    #print v, V[v], scatter_AP
+        try:
+            duration = City_to_Airport_Duration[v][ap]
+            if duration != float('inf') and duration is not None and isinstance(duration, (int, float)) and duration < max_accsess_egress_time:
+                scatter_AP.append(ap)  # Use append for lists, np.append is for arrays
+            elif duration is None:
+                print(f"Warning: None value found at City_to_Airport_Duration[{v}][{ap}]")
+        except IndexError as e:
+            print(f"IndexError at v={v}, ap={ap}: {e}")
+            print(f"Current City_to_Airport_Duration shape: {City_to_Airport_Duration.shape}")
+            raise
+        except TypeError as e:
+            print(f"TypeError at v={v}, ap={ap}: {e} - Value: {duration}")
+            raise
     scatter_list_City_to_Airport[v][0] = scatter_AP
+
+
+for v in range(len(V)):
+    print(f"City {V[v]}: {scatter_list_City_to_Airport[v][0]}")
 
 time.sleep(1)
 #build flight-options
@@ -994,6 +1059,9 @@ for i in range_len_V:
                     flight_options[i,j][x,y] = T_inv_air[ap1,ap2]
                     
 
+
+for v in range(len(V)):
+    print(f"City {V[v]}: {scatter_list_City_to_Airport[v][0]}")
 
 """"---------------------------------------------------------------------------
 --------------------------------     ШАГ 6.    -------------------------------
@@ -1334,7 +1402,7 @@ print('log. Сохраняем матрицу переведенного спр�
 df = pd.DataFrame(DEMAND_AIR, index=list_of_airports[:length_V], columns=list_of_airports[:length_V])
 df.to_excel(excel_writer = "TNDP_Russia/Total_output_data/DEMAND_AIR_standart.xlsx")     
 
-# Новая матрица для времени "дом-аэропорт-отель-аэропорт-дом"
+# Новая матрица для времени "дом-аэропорт-отель"
 DEMAND_TOTAL_TRIP_TIME = np.zeros((length_V, length_V))
 
 for i in range_len_V:
@@ -1346,6 +1414,7 @@ for i in range_len_V:
             # time_back = Matrix_avg_flight_2[j,i][4] if Matrix_avg_flight_2[j,i][4] != float('inf') else 0
             # Суммарное время поездки туда и обратно
             DEMAND_TOTAL_TRIP_TIME[i,j] = time_to_destination
+
 
 # Экспорт матрицы
 df = pd.DataFrame(DEMAND_TOTAL_TRIP_TIME, index=list_of_airports[:length_V], columns=list_of_airports[:length_V])
@@ -1415,3 +1484,6 @@ df.to_excel(excel_writer = "TNDP_Russia/Total_output_data/DEMAND_TOTAL_standart.
 # print( round(DEMAND_TOTAL[113,122]), V[113], V[122] )
  
 #'''
+
+
+print("Airports used in DEMAND_TOTAL_TRIP_TIME:", list_of_airports[:length_V])
